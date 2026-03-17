@@ -13,6 +13,7 @@ type Screen =
   | 'commission'
   | 'response-speed'
   | 'follow-up'
+  | 'automation'
   | 'processing'
   | 'email-gate'
   | 'results';
@@ -27,6 +28,7 @@ type ResponseSpeedOption =
   | 'Same day'
   | 'Next day';
 type FollowUpOption = '1-2 times' | '3-4 times' | '5-7 times' | '8+';
+type AutomationOption = 'Yes' | 'No';
 
 interface FormData {
   closings: string;
@@ -35,6 +37,7 @@ interface FormData {
   commission: CommissionOption | '';
   responseSpeed: ResponseSpeedOption | '';
   followUp: FollowUpOption | '';
+  automation: AutomationOption | '';
   email: string;
 }
 
@@ -112,15 +115,220 @@ const STEP_SCREENS: Screen[] = [
   'commission',
   'response-speed',
   'follow-up',
+  'automation',
 ];
 
 const SCORE_TIERS: { min: number; label: string; color: string; bg: string }[] = [
-  { min: 90, label: 'Elite', color: 'text-emerald-700', bg: 'bg-emerald-100' },
-  { min: 80, label: 'High Performer', color: 'text-blue-700', bg: 'bg-blue-100' },
-  { min: 70, label: 'Above Average', color: 'text-indigo-700', bg: 'bg-indigo-100' },
-  { min: 55, label: 'Average', color: 'text-amber-700', bg: 'bg-amber-100' },
-  { min: 0, label: 'Below Average', color: 'text-red-700', bg: 'bg-red-100' },
+  { min: 75, label: 'Elite', color: 'text-emerald-700', bg: 'bg-emerald-100' },
+  { min: 65, label: 'High Performer', color: 'text-blue-700', bg: 'bg-blue-100' },
+  { min: 55, label: 'Above Average', color: 'text-indigo-700', bg: 'bg-indigo-100' },
+  { min: 40, label: 'Falling Behind', color: 'text-amber-700', bg: 'bg-amber-100' },
+  { min: 0, label: 'At Risk', color: 'text-red-700', bg: 'bg-red-100' },
 ];
+
+// Badge config for top 20% agents
+const BADGES: { min: number; badge: string; badgeColor: string; badgeBg: string; badgeBorder: string; icon: string }[] = [
+  { min: 90, badge: 'Top 5% Agent', badgeColor: 'text-amber-900', badgeBg: 'bg-gradient-to-br from-amber-300 to-yellow-500', badgeBorder: 'border-amber-400', icon: '🏆' },
+  { min: 80, badge: 'Top 10% Agent', badgeColor: 'text-slate-800', badgeBg: 'bg-gradient-to-br from-gray-200 to-gray-400', badgeBorder: 'border-gray-400', icon: '🥈' },
+  { min: 70, badge: 'Top 20% Agent', badgeColor: 'text-amber-900', badgeBg: 'bg-gradient-to-br from-orange-300 to-amber-600', badgeBorder: 'border-amber-500', icon: '🥉' },
+];
+
+function getBadge(score: number) {
+  return BADGES.find((b) => score >= b.min) ?? null;
+}
+
+// Score-based CTA hooks for Agent Assistant
+function getCtaHook(score: number, commissionLeak: string) {
+  if (score >= 90) return {
+    headline: 'Protect Your Edge',
+    sub: 'You\'re already elite. Agent Assistant automates your speed-to-lead and follow-up so you stay on top without burning out.',
+    cta: 'Scale Without Burnout →',
+  };
+  if (score >= 80) return {
+    headline: 'You\'re Close to the Top',
+    sub: 'A few automated systems separate you from the top 5%. Agent Assistant closes the gap on speed and follow-up.',
+    cta: 'Push Into the Top 5% →',
+  };
+  if (score >= 70) return {
+    headline: `Stop Leaving ${commissionLeak} on the Table`,
+    sub: 'You\'re above average, but your speed-to-lead and follow-up have clear gaps. Agent Assistant fixes both in minutes.',
+    cta: 'Fix Your Pipeline Gaps →',
+  };
+  if (score >= 55) return {
+    headline: `You\'re Losing ${commissionLeak}/yr to Faster Agents`,
+    sub: 'Your competitors are responding faster and following up more. Agent Assistant responds in under 60 seconds and runs 7+ touch sequences automatically.',
+    cta: 'Stop Losing to Faster Agents →',
+  };
+  return {
+    headline: `${commissionLeak}/yr Is Walking Out the Door`,
+    sub: 'Your response time and follow-up are costing you deals every single week. Agent Assistant responds instantly and follows up automatically — even while you sleep.',
+    cta: 'Fix This Now →',
+  };
+}
+
+// Score-based 3-step improvement plans
+function getImprovementPlan(score: number, results: ScoreResult) {
+  // Elite (90+): You're already winning — automate, scale, help your team
+  if (score >= 90) return [
+    {
+      step: '01',
+      title: 'Automate Your Workflow to Free Up 10+ Hours/Week',
+      desc: 'You\'re already closing at elite levels. Let AI handle speed-to-lead, follow-up sequences, and appointment booking so you can focus on high-value conversations.',
+      color: 'border-emerald-200 bg-emerald-50',
+      icon: '🤖',
+    },
+    {
+      step: '02',
+      title: 'Help Your Team Match Your Performance',
+      desc: 'Your systems work. Clone them for your team — set up automated playbooks so every agent in your office responds and follows up at your level.',
+      color: 'border-emerald-200 bg-emerald-50',
+      icon: '👥',
+    },
+    {
+      step: '03',
+      title: 'Scale Your Lead Volume Without Scaling Effort',
+      desc: 'With automation handling the grunt work, you can safely 2-3x your lead sources without dropping quality. More leads, same effort, bigger checks.',
+      color: 'border-emerald-200 bg-emerald-50',
+      icon: '📈',
+    },
+  ];
+
+  // High Performer (80-89): Close the gap to elite
+  if (score >= 80) return [
+    {
+      step: '01',
+      title: results.speedScore < 85 ? 'Close Your Speed Gap' : 'Lock In Your Response Speed',
+      desc: results.speedScore < 85
+        ? 'You\'re fast, but not instant. The top 5% respond in under 60 seconds — even on nights and weekends. Automate your first response to eliminate the gap.'
+        : 'Your speed-to-lead is strong. Add automated failover for off-hours to make sure no lead waits more than a minute, ever.',
+      color: results.speedScore < 85 ? 'border-amber-200 bg-amber-50' : 'border-emerald-200 bg-emerald-50',
+      icon: results.speedScore < 85 ? '⚡' : '✅',
+    },
+    {
+      step: '02',
+      title: results.followUpScore < 85 ? 'Add 2-3 More Follow-Up Touches' : 'Optimize Your Follow-Up Sequences',
+      desc: results.followUpScore < 85
+        ? 'Top agents make 8-12 touches per lead. You\'re close — automate the last few touches so every lead gets a full sequence without extra work.'
+        : 'Your follow-up cadence is elite. A/B test your messaging to squeeze even more conversions from the same pipeline.',
+      color: results.followUpScore < 85 ? 'border-amber-200 bg-amber-50' : 'border-emerald-200 bg-emerald-50',
+      icon: results.followUpScore < 85 ? '📬' : '✅',
+    },
+    {
+      step: '03',
+      title: 'Systematize to Break Into the Top 5%',
+      desc: 'The difference between top 10% and top 5% isn\'t skill — it\'s systems. Automate intake, nurture, and booking so you never lose a deal to human error.',
+      color: 'border-blue-200 bg-blue-50',
+      icon: '🎯',
+    },
+  ];
+
+  // Above Average (70-79): Fix the gaps holding you back
+  if (score >= 70) return [
+    {
+      step: '01',
+      title: results.speedScore < 70 ? 'Fix Your Response Time — It\'s Costing You' : 'Protect Your Speed Advantage',
+      desc: results.speedScore < 70
+        ? 'Leads go cold fast. Agents who respond in under 5 minutes are 100x more likely to connect. Automate instant responses so you never miss the window.'
+        : 'Your response time is solid. Set up automated alerts for any lead that hasn\'t been contacted in 5 minutes to keep it locked down.',
+      color: results.speedScore < 70 ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50',
+      icon: results.speedScore < 70 ? '⚡' : '✅',
+    },
+    {
+      step: '02',
+      title: results.followUpScore < 70 ? 'Build a Follow-Up System (Not Just Reminders)' : 'Scale Your Follow-Up Without More Effort',
+      desc: results.followUpScore < 70
+        ? 'You\'re leaving deals on the table with inconsistent follow-up. An automated 7+ touch sequence ensures every lead gets worked, every time.'
+        : 'You\'re following up well, but doing it manually limits your capacity. Automate your sequence so you can handle 2x the leads.',
+      color: results.followUpScore < 70 ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50',
+      icon: results.followUpScore < 70 ? '📬' : '✅',
+    },
+    {
+      step: '03',
+      title: 'Tighten Your Conversion Pipeline',
+      desc: results.conversionScore < 70
+        ? 'Structured intake, pre-appointment nurture, and automated objection handling can push your conversion rate above 8% — where the real money is.'
+        : 'Your conversion rate is strong. Focus on increasing top-of-funnel lead volume to turn that efficiency into bigger paychecks.',
+      color: results.conversionScore < 70 ? 'border-amber-200 bg-amber-50' : 'border-emerald-200 bg-emerald-50',
+      icon: results.conversionScore < 70 ? '📈' : '✅',
+    },
+  ];
+
+  // Falling Behind (55-69): Urgent fixes needed
+  if (score >= 55) return [
+    {
+      step: '01',
+      title: results.speedScore < 60 ? 'Your Speed Is Killing Your Pipeline' : 'Speed Is Your One Bright Spot — Don\'t Lose It',
+      desc: results.speedScore < 60
+        ? 'You\'re responding too slow. By the time you call back, faster agents already have the appointment. AI speed-to-lead can get your response under 60 seconds today.'
+        : 'Your response time is decent, but everything else needs work. Automate your speed-to-lead so you can focus on fixing follow-up and conversion.',
+      color: results.speedScore < 60 ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50',
+      icon: results.speedScore < 60 ? '🚨' : '⚡',
+    },
+    {
+      step: '02',
+      title: 'Stop Letting Leads Die After 1-2 Touches',
+      desc: results.followUpScore < 60
+        ? '80% of deals close after 5+ touches. You\'re giving up way too early. An automated follow-up sequence is the fastest way to recover lost revenue.'
+        : 'You\'re following up, but not enough. Bump from 3-4 touches to 7+ with an automated sequence — each extra touch is money on the table.',
+      color: results.followUpScore < 60 ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50',
+      icon: '📬',
+    },
+    {
+      step: '03',
+      title: 'Get a System — Any System',
+      desc: 'Top agents don\'t wing it. They have automated intake, instant response, and multi-touch sequences running 24/7. You need a system that works while you sleep.',
+      color: 'border-red-200 bg-red-50',
+      icon: '🔧',
+    },
+  ];
+
+  // At Risk (<55): Emergency intervention
+  return [
+    {
+      step: '01',
+      title: 'Stop the Bleeding: Automate Your First Response',
+      desc: 'Every hour you wait to respond, your close probability drops by 90%. Set up AI-powered instant response today — it takes 15 minutes and immediately stops the bleeding.',
+      color: 'border-red-300 bg-red-50',
+      icon: '🚨',
+    },
+    {
+      step: '02',
+      title: 'Build a Follow-Up Engine Before Your Next Lead Comes In',
+      desc: 'You\'re losing most of your leads after the first contact. A 7-touch automated sequence will work every lead systematically — no more leads falling through the cracks.',
+      color: 'border-red-300 bg-red-50',
+      icon: '🔄',
+    },
+    {
+      step: '03',
+      title: 'Rebuild Your Pipeline With Proven Systems',
+      desc: 'The agents taking your deals aren\'t smarter — they have better systems. Speed-to-lead + automated follow-up + structured nurture = more closings from the same leads.',
+      color: 'border-red-300 bg-red-50',
+      icon: '🏗️',
+    },
+  ];
+}
+
+// Tier-specific share messaging
+function getShareConfig(score: number, tier: { label: string }, commissionLeak: string) {
+  if (score >= 70) return {
+    heading: 'You Earned a Badge — Show It Off',
+    sub: 'Flex your score. Challenge your office. See who\'s really on top.',
+    challengeText: `I just earned a ${getBadge(score)?.badge || tier.label} badge on the Real Agent Report with a ${score}/100. Think you can beat me?`,
+    sharePrompt: 'Share your badge and challenge other agents',
+  };
+  if (score >= 55) return {
+    heading: 'Are Your Colleagues Losing Deals Too?',
+    sub: `You might not be the only one leaking ${commissionLeak}. Send this to your office and find out who\'s actually on top.`,
+    challengeText: `I just found out I might be losing ${commissionLeak}/yr in commission. Curious where you stack up? Take the 60-second audit:`,
+    sharePrompt: 'Send to your office — see who\'s really winning',
+  };
+  return {
+    heading: 'Don\'t Let Your Colleagues Make the Same Mistake',
+    sub: 'Most agents have no idea how much commission they\'re losing. Share this and find out who in your office needs a wake-up call.',
+    challengeText: `I just took the Real Agent Report and the results were eye-opening. Find out how much commission you might be losing:`,
+    sharePrompt: 'Share the wake-up call with other agents',
+  };
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -179,11 +387,11 @@ function computeResults(data: FormData): ScoreResult | null {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function ProgressBar({ step }: { step: number }) {
-  const pct = Math.round((step / 6) * 100);
+  const pct = Math.round((step / 7) * 100);
   return (
     <div className="w-full mb-8">
       <div className="flex justify-between text-xs text-gray-500 mb-1.5">
-        <span>Step {step} of 6</span>
+        <span>Step {step} of 7</span>
         <span>{pct}% complete</span>
       </div>
       <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -343,23 +551,47 @@ function MetricCard({
 
 // ─── Screens ──────────────────────────────────────────────────────────────────
 
-function ScreenLanding({ onStart }: { onStart: () => void }) {
+function ScreenLanding({ onStart, challengeScore }: { onStart: () => void; challengeScore: number | null }) {
+  const challengeTier = challengeScore !== null ? getScoreTier(challengeScore) : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-brand-950 to-brand-900 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full text-center">
+        {/* Challenge banner */}
+        {challengeScore !== null && (
+          <div className="bg-amber-400/15 border-2 border-amber-400/40 rounded-2xl px-6 py-5 mb-8 max-w-lg mx-auto animate-fade-in">
+            <div className="text-amber-300 text-xs uppercase tracking-widest font-bold mb-2">Challenge Received</div>
+            <div className="text-white text-lg font-bold mb-1">
+              A fellow agent scored <span className="text-amber-400 text-2xl font-extrabold">{challengeScore}/100</span>
+            </div>
+            <div className={`inline-block px-2 py-0.5 rounded text-xs font-bold mb-2 ${challengeTier?.bg} ${challengeTier?.color}`}>
+              {challengeTier?.label}
+            </div>
+            <p className="text-blue-200/80 text-sm">Think you can beat them? Take the 60-second audit and find out.</p>
+          </div>
+        )}
+
         {/* Logo/brand mark */}
         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-full px-4 py-2 mb-8">
           <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-          <span className="text-white/80 text-sm font-medium">Powered by Agent Assistant</span>
+          <span className="text-white/80 text-sm font-medium">Real Agent Report</span>
         </div>
 
         <h1 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight mb-5">
-          How Much Commission Are You{' '}
-          <span className="text-amber-400">Losing Every Year?</span>
+          {challengeScore !== null ? (
+            <>
+              Can You <span className="text-amber-400">Beat Their Score?</span>
+            </>
+          ) : (
+            <>
+              How Much Commission Are You{' '}
+              <span className="text-amber-400">Losing Every Year?</span>
+            </>
+          )}
         </h1>
 
         <p className="text-lg sm:text-xl text-blue-100 mb-4 max-w-xl mx-auto">
-          Run the 60-second Agent Assistant Report audit and see how many deals may be slipping through your pipeline.
+          Run the 60-second Agent Performance Score audit and see how many deals may be slipping through your pipeline.
         </p>
 
         <div className="bg-amber-400/10 border border-amber-400/30 rounded-xl px-6 py-4 mb-8 max-w-lg mx-auto">
@@ -373,7 +605,7 @@ function ScreenLanding({ onStart }: { onStart: () => void }) {
           onClick={onStart}
           className="w-full sm:w-auto bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-slate-900 font-extrabold text-lg px-10 py-5 rounded-2xl shadow-lg shadow-amber-400/30 transition-all duration-150 hover:scale-[1.02] active:scale-[0.99]"
         >
-          Start the 60-Second Audit →
+          {challengeScore !== null ? 'Accept the Challenge →' : 'Run Your 60-Second Performance Score →'}
         </button>
 
         <div className="flex items-center justify-center gap-6 mt-8 text-sm text-blue-200/70">
@@ -418,7 +650,7 @@ function ScreenClosings({
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
           How many homes did you close in the last 12 months?
         </h2>
-        <p className="text-gray-500 text-sm">Enter a whole number (e.g. 18)</p>
+        <p className="text-gray-500 text-sm">Enter a whole number (e.g. 18). Estimate if unsure.</p>
       </div>
       <input
         type="number"
@@ -626,12 +858,7 @@ function ScreenResponseSpeed({
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">
           How quickly do you usually respond to new leads?
         </h2>
-        <p className="text-sm text-amber-600 font-medium flex items-center gap-1.5">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-          </svg>
-          Fast response times dramatically improve lead conversion.
-        </p>
+        <p className="text-sm text-gray-500">Be honest — this is where most agents lose deals.</p>
       </div>
       <div className="space-y-3">
         {options.map((o) => (
@@ -681,12 +908,57 @@ function ScreenFollowUp({
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">
           How many times do you typically follow up with a lead before moving on?
         </h2>
-        <p className="text-sm text-brand-700 font-medium flex items-center gap-1.5">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-          </svg>
-          Most deals happen after 5+ follow-ups.
-        </p>
+        <p className="text-sm text-gray-500">Include all channels — calls, texts, emails.</p>
+      </div>
+      <div className="space-y-3">
+        {options.map((o) => (
+          <OptionButton
+            key={o}
+            label={o}
+            selected={value === o}
+            onClick={() => onChange(o)}
+          />
+        ))}
+      </div>
+      <div className="flex gap-3">
+        <button
+          onClick={onBack}
+          className="flex-none px-6 py-4 border-2 border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-all"
+        >
+          ← Back
+        </button>
+        <button
+          onClick={onNext}
+          disabled={!value}
+          className="flex-1 bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl text-lg transition-all"
+        >
+          Next →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ScreenAutomation({
+  value,
+  onChange,
+  onNext,
+  onBack,
+}: {
+  value: AutomationOption | '';
+  onChange: (v: AutomationOption) => void;
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  const options: AutomationOption[] = ['Yes', 'No'];
+  return (
+    <div className="space-y-6">
+      <ProgressBar step={7} />
+      <div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">
+          Do you use any automated follow-up system?
+        </h2>
+        <p className="text-sm text-gray-500">CRM auto-sequences, AI responders, drip campaigns, etc.</p>
       </div>
       <div className="space-y-3">
         {options.map((o) => (
@@ -795,7 +1067,7 @@ function ScreenProcessing({ onDone }: { onDone: () => void }) {
       </div>
 
       <p className="text-gray-500 text-sm">
-        <span className="font-bold text-gray-700">3,248 agents</span> have taken the Agent Assistant Report audit this month.
+        <span className="font-bold text-gray-700">3,248 agents</span> have taken the Agent Performance Score this month.
       </p>
     </div>
   );
@@ -827,17 +1099,19 @@ function ScreenEmailGate({
       </div>
       <div>
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
-          Your Agent Assistant Report Is Ready
+          Your Agent Performance Score Is Ready
         </h2>
-        <p className="text-gray-500">Where should we send your full report?</p>
+        <p className="text-gray-500 text-lg font-medium">Where should we send your full report?</p>
       </div>
 
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 text-left max-w-sm mx-auto space-y-2.5">
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 text-left max-w-sm mx-auto space-y-2.5">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Your report includes:</p>
         {[
-          'Your Agent Performance Score',
-          "Deals you're likely losing",
-          'Your projected commission leak',
-          'A personalized improvement plan',
+          'Your Agent Performance Score vs. top agents',
+          "How many deals you're likely missing",
+          'Your estimated income gap',
+          'A personalized 3-step improvement plan',
+          'Your shareable performance badge',
         ].map((item) => (
           <div key={item} className="flex items-center gap-2.5 text-sm text-gray-700">
             <svg className="w-4 h-4 text-brand-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -869,14 +1143,14 @@ function ScreenEmailGate({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Loading your score...
+              Generating your report...
             </>
           ) : (
-            'See My Score →'
+            'Send My Report →'
           )}
         </button>
         <p className="text-xs text-gray-400">
-          We never spam. Unsubscribe anytime.
+          We&apos;ll send your full score report with a PDF breakdown and your performance badge. No spam, ever.
         </p>
       </div>
     </div>
@@ -887,12 +1161,16 @@ function ScreenResults({
   results,
   formData,
   onShare,
+  onChallenge,
   copied,
+  challengeScore,
 }: {
   results: ScoreResult;
   formData: FormData;
   onShare: () => void;
+  onChallenge: () => void;
   copied: boolean;
+  challengeScore: number | null;
 }) {
   const tier = getScoreTier(results.overallScore);
   const commissionLeak = formatCurrency(results.estimatedLostCommission);
@@ -905,49 +1183,19 @@ function ScreenResults({
       ? `This is equivalent to losing one deal every ${results.weeksPerLostDeal} weeks.`
       : null;
 
-  const improvements = [
-    {
-      step: '01',
-      title: 'Fix Your Response Speed',
-      desc:
-        results.speedScore < 70
-          ? 'Your response time is costing you leads. Implement AI speed-to-lead to respond within 60 seconds — even at 2am.'
-          : 'Good response speed. Maintain this with automated failover if your schedule changes.',
-      color: results.speedScore < 70 ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50',
-      icon: results.speedScore < 70 ? '⚡' : '✓',
-    },
-    {
-      step: '02',
-      title: 'Build a Systematic Follow-Up Engine',
-      desc:
-        results.followUpScore < 70
-          ? 'Most deals require 5-12 touches. An automated sequence means no lead ever falls through the cracks.'
-          : 'Solid follow-up discipline. Consider automating sequences to scale without mental overhead.',
-      color: results.followUpScore < 70 ? 'border-amber-200 bg-amber-50' : 'border-emerald-200 bg-emerald-50',
-      icon: results.followUpScore < 70 ? '📬' : '✓',
-    },
-    {
-      step: '03',
-      title: 'Improve Your Conversion System',
-      desc:
-        results.conversionScore < 70
-          ? 'Structured intake, pre-appointment nurture, and objection sequences can push your conversion rate above 8%.'
-          : 'Above-average conversion rate. Focus on increasing lead volume to scale revenue.',
-      color: results.conversionScore < 70 ? 'border-brand-200 bg-brand-50' : 'border-emerald-200 bg-emerald-50',
-      icon: results.conversionScore < 70 ? '📈' : '✓',
-    },
-  ];
+  const improvements = getImprovementPlan(results.overallScore, results);
 
   return (
     <div className="space-y-8">
       {/* Hero */}
       <div className="bg-gradient-to-br from-slate-900 to-brand-900 rounded-2xl p-6 sm:p-8 text-white text-center">
         <div className="inline-block bg-red-500/20 border border-red-400/40 text-red-200 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
-          Commission Leak Detected
+          Missed Opportunity Detected
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold mb-3 leading-tight">
-          Based on your answers, you could lose{' '}
-          <span className="text-amber-400">{commissionLeak}</span> in commission over the next 12 months if nothing changes.
+          Your estimated missed opportunity:{' '}
+          <span className="text-amber-400">{commissionLeak}</span>
+          <span className="block text-lg font-semibold text-blue-200 mt-2">per year with faster response and better follow-up.</span>
         </h1>
         {weeksLine && (
           <p className="text-blue-200 text-sm">{weeksLine}</p>
@@ -985,7 +1233,11 @@ function ScreenResults({
           <div className="flex-1 text-center sm:text-left">
             <h2 className="text-xl font-bold text-slate-900 mb-1">Your Agent Performance Score</h2>
             <p className="text-gray-500 text-sm mb-4">
-              You scored in the <span className={`font-bold ${tier.color}`}>{results.marketPercentile}</span> of real estate agents nationally.
+              {results.overallScore >= 80 ? (
+                <>You&apos;re in the <span className={`font-bold ${tier.color}`}>{results.marketPercentile}</span> of agents nationally.</>
+              ) : (
+                <>You&apos;re ranked <span className={`font-bold ${tier.color}`}>{results.marketPercentile}</span> — most agents in your range are leaving significant commission on the table.</>
+              )}
             </p>
             <div className="grid grid-cols-3 gap-3">
               {[
@@ -1006,6 +1258,35 @@ function ScreenResults({
           </div>
         </div>
       </div>
+
+      {/* Challenge comparison */}
+      {challengeScore !== null && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-6 shadow-sm text-center">
+          <div className="text-xs uppercase tracking-widest font-bold text-amber-600 mb-3">Challenge Result</div>
+          <div className="flex items-center justify-center gap-6">
+            <div>
+              <div className="text-sm text-gray-500 font-medium mb-1">Their Score</div>
+              <div className="text-3xl font-extrabold text-gray-400">{challengeScore}</div>
+            </div>
+            <div className="text-2xl font-bold text-gray-300">vs</div>
+            <div>
+              <div className="text-sm text-gray-500 font-medium mb-1">Your Score</div>
+              <div className={`text-3xl font-extrabold ${results.overallScore > challengeScore ? 'text-emerald-600' : results.overallScore < challengeScore ? 'text-red-600' : 'text-amber-600'}`}>
+                {results.overallScore}
+              </div>
+            </div>
+          </div>
+          <p className="mt-3 text-sm font-semibold">
+            {results.overallScore > challengeScore ? (
+              <span className="text-emerald-700">You beat their score by {results.overallScore - challengeScore} points! Now challenge another agent.</span>
+            ) : results.overallScore < challengeScore ? (
+              <span className="text-red-700">They beat you by {challengeScore - results.overallScore} points. See below how to improve your score.</span>
+            ) : (
+              <span className="text-amber-700">It&apos;s a tie! See below how to pull ahead.</span>
+            )}
+          </p>
+        </div>
+      )}
 
       {/* Benchmark comparison */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
@@ -1091,84 +1372,110 @@ function ScreenResults({
         </div>
       </div>
 
-      {/* Primary CTA */}
-      <div className="bg-gradient-to-br from-slate-900 to-brand-900 rounded-2xl p-6 sm:p-8 text-center">
-        <div className="text-3xl mb-3">🚀</div>
-        <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
-          Fix Your Leaks &amp; Boost Your Closings
-        </h3>
-        <p className="text-blue-200 text-sm mb-6 max-w-md mx-auto">
-          Agents using Agent Assistant typically close 3-6 more deals per year with AI speed-to-lead, automated follow-up, and smart conversion tools.
-        </p>
-        <a
-          href={`https://agentassistant.io/signup?ref=report&utm_source=report&utm_medium=cta${formData.email ? `&email=${encodeURIComponent(formData.email)}` : ''}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-slate-900 font-extrabold text-lg px-8 py-4 rounded-xl transition-all hover:scale-[1.02] shadow-lg shadow-amber-400/30"
-        >
-          Fix Your Leaks &amp; Boost Your Closings →
-        </a>
-        <p className="text-blue-300/60 text-xs mt-4">No credit card required · Setup in minutes</p>
-      </div>
-
-      {/* Viral share section */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm">
-        <h3 className="text-lg font-bold text-slate-900 mb-1">Share Your Score With Other Agents</h3>
-        <p className="text-gray-500 text-sm mb-5">
-          Think a colleague might be losing commission too? Challenge them.
-        </p>
-
-        {/* Score card preview */}
-        <div className="bg-gradient-to-br from-slate-800 to-brand-900 rounded-xl p-5 mb-5 max-w-xs mx-auto text-white">
-          <div className="text-[10px] uppercase tracking-widest text-blue-300/70 font-bold mb-2">Real Agent Performance Score</div>
-          <div className="text-4xl font-extrabold mb-1">{results.overallScore}<span className="text-lg text-white/50"> / 100</span></div>
-          <div className={`text-sm font-bold mb-1 ${tier.color.replace('text-', 'text-')}`}>
-            <span className={`inline-block px-2 py-0.5 rounded text-xs ${tier.bg} ${tier.color}`}>{tier.label}</span>
+      {/* Primary CTA — score-specific hook */}
+      {(() => {
+        const hook = getCtaHook(results.overallScore, commissionLeak);
+        return (
+          <div className="bg-gradient-to-br from-slate-900 to-brand-900 rounded-2xl p-6 sm:p-8 text-center">
+            <div className="text-3xl mb-3">{results.overallScore >= 80 ? '🚀' : results.overallScore >= 55 ? '⚡' : '🚨'}</div>
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+              {hook.headline}
+            </h3>
+            <p className="text-blue-200 text-sm mb-6 max-w-md mx-auto">
+              {hook.sub}
+            </p>
+            <a
+              href={`https://agentassistant.io/signup?ref=report&utm_source=report&utm_medium=cta&score=${results.overallScore}&tier=${encodeURIComponent(tier.label)}${formData.email ? `&email=${encodeURIComponent(formData.email)}` : ''}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-slate-900 font-extrabold text-lg px-8 py-4 rounded-xl transition-all hover:scale-[1.02] shadow-lg shadow-amber-400/30"
+            >
+              {hook.cta}
+            </a>
+            <p className="text-blue-300/60 text-xs mt-4">No credit card required · Setup in minutes</p>
           </div>
-          <div className="text-xs text-blue-200/60 mt-2">Commission Leak: {commissionLeak}/yr</div>
-          <div className="text-[10px] text-blue-300/40 mt-3">realagentreport.com</div>
-        </div>
+        );
+      })()}
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button
-            onClick={onShare}
-            className={`inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border-2 transition-all ${
-              copied
-                ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
-                : 'border-gray-200 bg-white text-gray-700 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700'
-            }`}
-          >
-            {copied ? (
-              <>
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                Link Copied!
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                Copy Audit Link
-              </>
+      {/* Viral share section — tier-specific */}
+      {(() => {
+        const badge = getBadge(results.overallScore);
+        const shareConfig = getShareConfig(results.overallScore, tier, commissionLeak);
+        return (
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">{shareConfig.heading}</h3>
+            <p className="text-gray-500 text-sm mb-5">{shareConfig.sub}</p>
+
+            {/* Score card with badge */}
+            <div className="bg-gradient-to-br from-slate-800 to-brand-900 rounded-xl p-5 mb-5 max-w-xs mx-auto text-white relative overflow-hidden">
+              {badge && (
+                <div className={`absolute -top-1 -right-1 ${badge.badgeBg} ${badge.badgeColor} text-[10px] font-extrabold uppercase tracking-wider px-3 py-1.5 rounded-bl-lg rounded-tr-xl shadow-lg`}>
+                  {badge.icon} {badge.badge}
+                </div>
+              )}
+              <div className="text-[10px] uppercase tracking-widest text-blue-300/70 font-bold mb-2">Real Agent Performance Score</div>
+              <div className="text-4xl font-extrabold mb-1">{results.overallScore}<span className="text-lg text-white/50"> / 100</span></div>
+              <div className="text-sm font-bold mb-1">
+                <span className={`inline-block px-2 py-0.5 rounded text-xs ${tier.bg} ${tier.color}`}>{tier.label}</span>
+              </div>
+              {badge ? (
+                <div className="text-xs text-emerald-300/80 mt-2 font-semibold">Verified {badge.badge} — Real Agent Report</div>
+              ) : (
+                <div className="text-xs text-blue-200/60 mt-2">Commission Leak: {commissionLeak}/yr</div>
+              )}
+              <div className="text-[10px] text-blue-300/40 mt-3">realagentreport.com</div>
+            </div>
+
+            {/* Badge display for top 20% */}
+            {badge && (
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 ${badge.badgeBorder} ${badge.badgeBg} mb-5 shadow-md`}>
+                <span className="text-lg">{badge.icon}</span>
+                <span className={`font-extrabold text-sm ${badge.badgeColor}`}>Certified {badge.badge}</span>
+                <span className={`text-xs ${badge.badgeColor} opacity-70`}>by Real Agent Report</span>
+              </div>
             )}
-          </button>
-          <button
-            onClick={() => {
-              const msg = `I just ran the Agent Assistant Report and scored ${results.overallScore}/100. Curious what you get. Run it here: ${window.location.origin}`;
-              navigator.clipboard.writeText(msg);
-              onShare();
-            }}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border-2 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 transition-all"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-            </svg>
-            Challenge Another Agent
-          </button>
-        </div>
-      </div>
+
+            {/* Share buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={onShare}
+                className={`inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border-2 transition-all ${
+                  copied
+                    ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700'
+                }`}
+              >
+                {copied ? (
+                  <>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy Link
+                  </>
+                )}
+              </button>
+              <button
+                onClick={onChallenge}
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border-2 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 transition-all"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                </svg>
+                {badge ? 'Challenge Another Agent' : 'Send to Your Office'}
+              </button>
+            </div>
+
+            <p className="text-gray-400 text-xs mt-4">{shareConfig.sharePrompt}</p>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -1185,11 +1492,25 @@ export default function ReportPage() {
     commission: '',
     responseSpeed: '',
     followUp: '',
+    automation: '',
     email: '',
   });
   const [results, setResults] = useState<ScoreResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [challengeScore, setChallengeScore] = useState<number | null>(null);
+
+  // Read challenge score from URL params (e.g. ?challenge=38)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const challenge = params.get('challenge');
+    if (challenge) {
+      const score = parseInt(challenge, 10);
+      if (!isNaN(score) && score >= 0 && score <= 100) {
+        setChallengeScore(score);
+      }
+    }
+  }, []);
 
   // Animated transition helper
   const goTo = useCallback(
@@ -1256,14 +1577,30 @@ export default function ReportPage() {
     goTo('email-gate');
   }, [goTo]);
 
-  // Viral share
+  // Viral share — include score in URL so recipients see the challenge
   const handleShare = useCallback(() => {
-    const url = window.location.origin;
+    const url = results
+      ? `${window.location.origin}?challenge=${results.overallScore}`
+      : window.location.origin;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     });
-  }, []);
+  }, [results]);
+
+  // Challenge another agent — tier-specific message with score URL
+  const handleChallenge = useCallback(() => {
+    if (!results) return;
+    const challengeUrl = `${window.location.origin}?challenge=${results.overallScore}`;
+    const tier = getScoreTier(results.overallScore);
+    const leak = formatCurrency(results.estimatedLostCommission);
+    const shareConfig = getShareConfig(results.overallScore, tier, leak);
+    const msg = `${shareConfig.challengeText} ${challengeUrl}`;
+    navigator.clipboard.writeText(msg).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  }, [results]);
 
   // Render landing separately (full-screen dark)
   if (screen === 'landing') {
@@ -1271,7 +1608,7 @@ export default function ReportPage() {
       <div
         className={`transition-opacity duration-200 ${animating ? 'opacity-0' : 'opacity-100'}`}
       >
-        <ScreenLanding onStart={() => goTo('closings')} />
+        <ScreenLanding onStart={() => goTo('closings')} challengeScore={challengeScore} />
       </div>
     );
   }
@@ -1288,17 +1625,19 @@ export default function ReportPage() {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-brand-600 rounded-full" />
-              <span className="font-bold text-brand-800 text-sm">Agent Assistant Report</span>
+              <span className="font-bold text-brand-800 text-sm">Real Agent Report</span>
             </div>
             <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-              Powered by Agent Assistant
+              Agent Performance Score
             </span>
           </div>
           <ScreenResults
             results={results}
             formData={formData}
             onShare={handleShare}
+            onChallenge={handleChallenge}
             copied={copied}
+            challengeScore={challengeScore}
           />
         </div>
       </div>
@@ -1335,10 +1674,10 @@ export default function ReportPage() {
             className="flex items-center gap-2 hover:opacity-70 transition-opacity"
           >
             <span className="w-2 h-2 bg-brand-600 rounded-full" />
-            <span className="font-bold text-brand-800 text-sm">Agent Assistant Report</span>
+            <span className="font-bold text-brand-800 text-sm">Real Agent Report</span>
           </button>
           <span className="text-xs text-gray-400 bg-white border border-gray-200 px-3 py-1 rounded-full">
-            Free Audit
+            Agent Performance Score
           </span>
         </div>
 
@@ -1387,6 +1726,14 @@ export default function ReportPage() {
             <ScreenFollowUp
               value={formData.followUp}
               onChange={(v) => setFormData((f) => ({ ...f, followUp: v }))}
+              onNext={() => goTo('automation')}
+              onBack={handleBack}
+            />
+          )}
+          {screen === 'automation' && (
+            <ScreenAutomation
+              value={formData.automation}
+              onChange={(v) => setFormData((f) => ({ ...f, automation: v }))}
               onNext={() => goTo('processing')}
               onBack={handleBack}
             />

@@ -5,11 +5,11 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Agent Assistant Report - Free AI Conversion Audit for Real Estate Agents',
-  description: 'Discover how much commission you\'re leaving on the table. Get your free AI-powered conversion audit in 60 seconds.',
+  title: 'Real Agent Report - Free Agent Performance Score for Real Estate Agents',
+  description: 'Discover how much commission you\'re leaving on the table. Get your free Agent Performance Score in 60 seconds.',
   openGraph: {
-    title: 'Agent Assistant Report - How Much Commission Are You Losing?',
-    description: 'Run the free 60-second audit and see how many deals are slipping through your pipeline.',
+    title: 'Real Agent Report - How Much Commission Are You Losing?',
+    description: 'Run the free 60-second Agent Performance Score audit and see how many deals are slipping through your pipeline.',
     type: 'website',
   },
 };

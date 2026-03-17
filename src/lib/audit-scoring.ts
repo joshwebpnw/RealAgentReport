@@ -56,12 +56,45 @@ export function calculateConversionScore(rate: number): number {
   return 0;
 }
 
+/**
+ * Standard normal CDF approximation using the error function.
+ * Maps a 0-100 score to a percentile using a bell curve distribution.
+ *
+ * Parameters calibrated to real estate agent performance:
+ * - Mean = 45 (average agent scores below midpoint)
+ * - SD = 18 (reasonable spread across the population)
+ */
+function normalCDF(x: number, mean: number, sd: number): number {
+  const z = (x - mean) / (sd * Math.SQRT2);
+  // Abramowitz & Stegun approximation of erf
+  const t = 1 / (1 + 0.3275911 * Math.abs(z));
+  const a = [0.254829592, -0.284496736, 1.421413741, -1.453152027, 1.061405429];
+  const poly = t * (a[0] + t * (a[1] + t * (a[2] + t * (a[3] + t * a[4]))));
+  const erf = 1 - poly * Math.exp(-(z * z));
+  const erfSigned = z >= 0 ? erf : -erf;
+  return 0.5 * (1 + erfSigned);
+}
+
+const BELL_CURVE_MEAN = 45;
+const BELL_CURVE_SD = 18;
+
+export function scoreToPercentile(overallScore: number): number {
+  const raw = normalCDF(overallScore, BELL_CURVE_MEAN, BELL_CURVE_SD) * 100;
+  // Clamp to 1-99 range (never show 0th or 100th percentile)
+  return Math.round(Math.max(1, Math.min(99, raw)));
+}
+
 export function getMarketRanking(overallScore: number): { ranking: string; percentile: string } {
-  if (overallScore >= 90) return { ranking: 'Elite', percentile: 'Top 5%' };
-  if (overallScore >= 80) return { ranking: 'High Performer', percentile: 'Top 10%' };
-  if (overallScore >= 70) return { ranking: 'Above Average', percentile: 'Top 25%' };
-  if (overallScore >= 55) return { ranking: 'Average', percentile: 'Top 50%' };
-  return { ranking: 'Below Average', percentile: 'Bottom 50%' };
+  const pct = scoreToPercentile(overallScore);
+  let ranking: string;
+  if (pct >= 95) ranking = 'Elite';
+  else if (pct >= 87) ranking = 'High Performer';
+  else if (pct >= 71) ranking = 'Above Average';
+  else if (pct >= 39) ranking = 'Falling Behind';
+  else ranking = 'At Risk';
+
+  const percentileLabel = pct >= 50 ? `Top ${100 - pct}%` : `Bottom ${pct}%`;
+  return { ranking, percentile: percentileLabel };
 }
 
 export function calculateAuditScore(input: AuditInput): AuditScoreResult {
@@ -89,8 +122,12 @@ export function calculateAuditScore(input: AuditInput): AuditScoreResult {
 
   const lostDeals = Math.max(0, topAgentDeals - currentDealsPerYear);
   const recoverableDeals = lostDeals * DEAL_RECOVERY_RATE;
-  const recoverableAmount = Math.round(recoverableDeals * input.avgCommission);
-  const estimatedLostCommission = Math.round(lostDeals * input.avgCommission);
+  const rawRecoverable = Math.round(recoverableDeals * input.avgCommission);
+  const rawLostCommission = Math.round(lostDeals * input.avgCommission);
+  // Never show $0 — even top agents have missed opportunity via speed/follow-up gaps
+  // Floor: at least 2 deals worth of commission as missed opportunity
+  const estimatedLostCommission = Math.max(rawLostCommission, input.avgCommission * 2);
+  const recoverableAmount = Math.max(rawRecoverable, Math.round(estimatedLostCommission * DEAL_RECOVERY_RATE));
 
   // Speed benchmark description
   let speedBenchmark = '< 5 minutes (top agents)';

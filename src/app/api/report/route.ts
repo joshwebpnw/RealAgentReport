@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  calculateSpeedScore,
+  calculateFollowUpScore,
+  calculateConversionScore,
+  scoreToPercentile,
+} from '@/lib/audit-scoring';
 
 /**
- * Anonymous audit calculation for the Agent Assistant Report funnel.
+ * Anonymous audit calculation for the Real Agent Report funnel.
  * No auth required — this is the free lead-gen tool.
  *
  * Accepts the 6 question answers from the funnel and returns scores.
@@ -28,47 +34,20 @@ export async function POST(req: NextRequest) {
     const followUpTouches = parseFollowUp(followUpCount);
 
     // Calculate conversion rate from closings / leads
-    const conversionRate = leadsPerYear > 0 ? (closingsNum / leadsPerYear) * 100 : 3;
+    const conversionRate = leadsPerYear > 0 ? (closingsNum / leadsPerYear) * 100 : 2;
 
-    // --- Score calculations ---
-
-    // Speed score (40% weight)
-    let speedScore: number;
-    if (responseTimeMinutes < 5) speedScore = 100;
-    else if (responseTimeMinutes <= 30) speedScore = 80;
-    else if (responseTimeMinutes <= 60) speedScore = 60;
-    else if (responseTimeMinutes <= 180) speedScore = 40;
-    else if (responseTimeMinutes <= 480) speedScore = 25;
-    else speedScore = 10;
-
-    // Follow-up score (30% weight)
-    let followUpScore: number;
-    if (followUpTouches >= 8) followUpScore = 100;
-    else if (followUpTouches >= 5) followUpScore = 75;
-    else if (followUpTouches >= 3) followUpScore = 50;
-    else followUpScore = 20;
-
-    // Conversion score (30% weight)
-    let conversionScore: number;
-    if (conversionRate >= 8) conversionScore = 100;
-    else if (conversionRate >= 5) conversionScore = 75;
-    else if (conversionRate >= 3) conversionScore = 55;
-    else if (conversionRate >= 1) conversionScore = 30;
-    else conversionScore = 10;
+    // --- Score calculations (shared with frontend via audit-scoring.ts) ---
+    const speedScore = calculateSpeedScore(responseTimeMinutes);
+    const followUpScore = calculateFollowUpScore(followUpTouches);
+    const conversionScore = calculateConversionScore(conversionRate);
 
     // Overall weighted score
     const overallScore = Math.round(
       speedScore * 0.4 + followUpScore * 0.3 + conversionScore * 0.3
     );
 
-    // Percentile (simple bracket-based)
-    let percentile: number;
-    if (overallScore >= 90) percentile = 95;
-    else if (overallScore >= 80) percentile = 85;
-    else if (overallScore >= 70) percentile = 74;
-    else if (overallScore >= 55) percentile = 55;
-    else if (overallScore >= 40) percentile = 35;
-    else percentile = 20;
+    // Bell curve percentile (continuous, no more bracket collisions)
+    const percentile = scoreToPercentile(overallScore);
 
     // Badge tier
     let badge: string;
@@ -78,14 +57,19 @@ export async function POST(req: NextRequest) {
     else if (percentile >= 70) badge = 'Top 30%';
     else badge = '';
 
-    // Income gap & commission leak
-    const BENCHMARK_CONVERSION = 7.5; // top agent conversion %
-    const DEAL_RECOVERY_RATE = 0.35;
+    // Income gap & commission leak (aligned with audit-scoring.ts)
+    const BENCHMARK_CONVERSION = 8; // top agent conversion %
+    const BENCHMARK_DEALS_PER_YEAR = 38;
 
     const currentDeals = closingsNum;
-    const potentialDeals = Math.round(leadsPerYear * (BENCHMARK_CONVERSION / 100));
+    const potentialDeals = Math.min(
+      Math.round(leadsPerYear * (BENCHMARK_CONVERSION / 100)),
+      BENCHMARK_DEALS_PER_YEAR
+    );
     const lostDeals = Math.max(0, potentialDeals - currentDeals);
-    const commissionLeak = lostDeals * avgCommission;
+    const rawCommissionLeak = lostDeals * avgCommission;
+    // Never show $0 - floor at 2 deals worth of commission
+    const commissionLeak = Math.max(rawCommissionLeak, Math.round(avgCommission * 2));
     const weeksPerLostDeal = lostDeals > 0 ? Math.round(52 / lostDeals) : 0;
 
     // Improvement plan (personalized based on weakest area)
@@ -158,7 +142,7 @@ function parseResponseSpeed(val: string): number {
   if (lower.includes('5') && lower.includes('30')) return 15;
   if (lower.includes('30') && lower.includes('60')) return 45;
   if (lower.includes('1') && lower.includes('3')) return 120;
-  if (lower.includes('same day')) return 480;
+  if (lower.includes('same day')) return 720;
   if (lower.includes('next day')) return 1440;
   return 120;
 }
