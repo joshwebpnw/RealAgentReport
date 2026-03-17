@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'Real Agent Report - Free Agent Performance Score for Real Estate Agents',
   description: 'Discover how much commission you\'re leaving on the table. Get your free Agent Performance Score in 60 seconds.',
   openGraph: {
-    title: 'Real Agent Report - How Much Commission Are You Losing?',
+    title: 'Real Agent Report - How Much In Commissions Will You Lose In The Next 12 Months?',
     description: 'Run the free 60-second Agent Performance Score audit and see how many deals are slipping through your pipeline.',
     type: 'website',
   },

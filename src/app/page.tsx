@@ -584,8 +584,8 @@ function ScreenLanding({ onStart, challengeScore }: { onStart: () => void; chall
             </>
           ) : (
             <>
-              How Much Commission Are You{' '}
-              <span className="text-amber-400">Losing Every Year?</span>
+              How Much In Commissions Will You{' '}
+              <span className="text-amber-400">Lose In The Next 12 Months?</span>
             </>
           )}
         </h1>
