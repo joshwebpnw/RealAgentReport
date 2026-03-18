@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     else if (percentile >= 70) badge = 'Top 30%';
     else badge = '';
 
-    // Income gap & commission leak (aligned with audit-scoring.ts)
+    // Income analysis (aligned with audit-scoring.ts)
     const BENCHMARK_CONVERSION = 8; // top agent conversion %
     const BENCHMARK_DEALS_PER_YEAR = 38;
 
@@ -67,9 +67,7 @@ export async function POST(req: NextRequest) {
       BENCHMARK_DEALS_PER_YEAR
     );
     const lostDeals = Math.max(0, potentialDeals - currentDeals);
-    const rawCommissionLeak = lostDeals * avgCommission;
-    // Never show $0 - floor at 2 deals worth of commission
-    const commissionLeak = Math.max(rawCommissionLeak, Math.round(avgCommission * 2));
+    const commissionLeak = Math.round(lostDeals * avgCommission);
     const weeksPerLostDeal = lostDeals > 0 ? Math.round(52 / lostDeals) : 0;
 
     // Improvement plan (personalized based on weakest area)
@@ -119,20 +117,23 @@ export async function POST(req: NextRequest) {
 
 function parseLeadVolume(val: string): number {
   if (!val) return 200;
+  // Order matters: check most specific first
   if (val.includes('1000')) return 1200;
-  if (val.includes('500')) return 700;
-  if (val.includes('250')) return 375;
-  if (val.includes('100') && !val.startsWith('0')) return 175;
+  if (val.startsWith('500') || val === '500-1000') return 700;
+  if (val.startsWith('250') || val === '250-500') return 375;
+  if (val.startsWith('100') || val === '100-250') return 175;
   return 50; // 0-100
 }
 
 function parseCommission(val: string): number {
   if (!val) return 8000;
-  if (val.includes('20k')) return 25000;
-  if (val.includes('12k') || val.includes('20')) return 16000;
-  if (val.includes('8k') || val.includes('12')) return 10000;
-  if (val.includes('5k') || val.includes('8')) return 6500;
-  return 4000; // Under $5k
+  // Order matters: check exact option strings first
+  if (val.includes('20k') || val === '$20k+') return 25000;
+  if (val.includes('12k') || val === '$12k-$20k') return 16000;
+  if (val === '$8k-$12k') return 10000;
+  if (val === '$5k-$8k') return 6500;
+  if (val.includes('Under') || val.includes('under')) return 3500;
+  return 8000;
 }
 
 function parseResponseSpeed(val: string): number {

@@ -1189,38 +1189,53 @@ function ScreenResults({
     <div className="space-y-8">
       {/* Hero */}
       <div className="bg-gradient-to-br from-slate-900 to-brand-900 rounded-2xl p-6 sm:p-8 text-white text-center">
-        <div className="inline-block bg-red-500/20 border border-red-400/40 text-red-200 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
-          Missed Opportunity Detected
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold mb-3 leading-tight">
-          Your estimated missed opportunity:{' '}
-          <span className="text-amber-400">{commissionLeak}</span>
-          <span className="block text-lg font-semibold text-blue-200 mt-2">per year with faster response and better follow-up.</span>
-        </h1>
-        {weeksLine && (
-          <p className="text-blue-200 text-sm">{weeksLine}</p>
+        {results.estimatedLostCommission > 0 ? (
+          <>
+            <div className="inline-block bg-red-500/20 border border-red-400/40 text-red-200 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
+              Missed Opportunity Detected
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold mb-3 leading-tight">
+              Your estimated missed opportunity:{' '}
+              <span className="text-amber-400">{commissionLeak}</span>
+              <span className="block text-lg font-semibold text-blue-200 mt-2">per year with faster response and better follow-up.</span>
+            </h1>
+            {weeksLine && (
+              <p className="text-blue-200 text-sm">{weeksLine}</p>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="inline-block bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
+              Top Performer Identified
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold mb-3 leading-tight">
+              You&apos;re outperforming{' '}
+              <span className="text-emerald-400">the benchmark.</span>
+              <span className="block text-lg font-semibold text-blue-200 mt-2">Automation can help you maintain this edge and scale further.</span>
+            </h1>
+          </>
         )}
       </div>
 
       {/* Metric cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <MetricCard
-          label="Deals You Should Close"
-          value={`${results.currentDeals + results.lostDeals}`}
-          sub="Based on your lead volume"
+          label="Your Closings"
+          value={`${results.currentDeals}`}
+          sub="Last 12 months"
           highlight="blue"
         />
         <MetricCard
-          label="Deals You're Losing"
-          value={`${results.lostDeals}`}
-          sub="vs. top-agent benchmark"
-          highlight="red"
+          label={results.lostDeals > 0 ? "Deals You're Leaving Behind" : "Benchmark Deals"}
+          value={results.lostDeals > 0 ? `${results.lostDeals}` : `${results.currentDeals + results.lostDeals}`}
+          sub={results.lostDeals > 0 ? 'vs. 8% benchmark conversion' : 'You exceed the benchmark'}
+          highlight={results.lostDeals > 0 ? 'red' : 'blue'}
         />
         <MetricCard
-          label="Projected Commission Leak"
-          value={commissionLeak}
-          sub="Next 12 months at current rate"
-          highlight="red"
+          label={results.estimatedLostCommission > 0 ? "Projected Commission Leak" : "Your Est. Annual Commission"}
+          value={results.estimatedLostCommission > 0 ? commissionLeak : currentIncome}
+          sub={results.estimatedLostCommission > 0 ? "Next 12 months at current rate" : "Based on your closings"}
+          highlight={results.estimatedLostCommission > 0 ? 'red' : 'blue'}
         />
       </div>
 
@@ -1332,23 +1347,64 @@ function ScreenResults({
         </div>
       </div>
 
-      {/* Income gap */}
+      {/* Income Analysis */}
       <div className="bg-gradient-to-r from-brand-50 to-indigo-50 border border-brand-200 rounded-2xl p-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-4">Your Income Gap</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
-          <div>
-            <div className="text-xl font-bold text-gray-700">{currentIncome}</div>
-            <div className="text-xs text-gray-500 mt-0.5">Your Est. Annual Commission</div>
+        <h3 className="text-lg font-bold text-slate-900 mb-2">Income Analysis</h3>
+        <p className="text-xs text-gray-500 mb-4">Based on your inputs vs. top-agent benchmarks (8% conversion rate, capped at 38 deals/yr)</p>
+
+        {/* Your numbers row */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="bg-white rounded-xl p-3 text-center border border-gray-100">
+            <div className="text-xl font-bold text-gray-800">{results.currentDeals}</div>
+            <div className="text-[10px] text-gray-500 mt-0.5 leading-tight">Your Closings<br/>(Last 12 Mo)</div>
           </div>
-          <div>
-            <div className="text-xl font-bold text-brand-700">{topIncome}</div>
-            <div className="text-xs text-gray-500 mt-0.5">Top Agent Equivalent</div>
+          <div className="bg-white rounded-xl p-3 text-center border border-gray-100">
+            <div className="text-xl font-bold text-gray-800">{results.conversionBreakdown.input.toFixed(1)}%</div>
+            <div className="text-[10px] text-gray-500 mt-0.5 leading-tight">Your Conversion<br/>Rate</div>
           </div>
-          <div className="col-span-2 sm:col-span-1">
-            <div className="text-xl font-bold text-emerald-700">{recoverable}</div>
-            <div className="text-xs text-gray-500 mt-0.5">Recoverable with Right Systems</div>
+          <div className="bg-white rounded-xl p-3 text-center border border-gray-100">
+            <div className="text-xl font-bold text-gray-800">{currentIncome}</div>
+            <div className="text-[10px] text-gray-500 mt-0.5 leading-tight">Your Est. Annual<br/>Commission</div>
           </div>
         </div>
+
+        {/* Comparison bar */}
+        {results.lostDeals > 0 ? (
+          <div className="bg-white rounded-xl p-4 border border-gray-100 space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-semibold text-gray-600">Your Income</span>
+              <span className="text-sm font-bold text-gray-700">{currentIncome}</span>
+            </div>
+            <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
+              <div className="absolute inset-y-0 left-0 bg-brand-500 rounded-full" style={{ width: `${Math.min(100, (results.incomeGap.currentEstimatedIncome / Math.max(results.incomeGap.topAgentIncome, 1)) * 100)}%` }} />
+              <div className="absolute inset-y-0 left-0 bg-emerald-400/40 rounded-full" style={{ width: '100%' }} />
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-semibold text-gray-600">Benchmark Income</span>
+              <span className="text-sm font-bold text-emerald-700">{topIncome}</span>
+            </div>
+
+            <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3">
+              <div className="text-center">
+                <div className="text-lg font-bold text-red-600">{results.lostDeals} deals</div>
+                <div className="text-[10px] text-gray-500">You&apos;re Leaving on the Table</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-emerald-700">{recoverable}</div>
+                <div className="text-[10px] text-gray-500">Recoverable with Automation</div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+            <div className="text-2xl mb-1">&#127942;</div>
+            <div className="text-sm font-bold text-emerald-800">You&apos;re outperforming the benchmark!</div>
+            <p className="text-xs text-emerald-600 mt-1">
+              Your {results.conversionBreakdown.input.toFixed(1)}% conversion rate beats the 8% top-agent benchmark.
+              Automation can help you maintain this edge at scale.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* 3-step improvement plan */}
@@ -1401,6 +1457,11 @@ function ScreenResults({
       {(() => {
         const badge = getBadge(results.overallScore);
         const shareConfig = getShareConfig(results.overallScore, tier, commissionLeak);
+        const shareUrl = typeof window !== 'undefined'
+          ? `${window.location.origin}?challenge=${results.overallScore}`
+          : `https://realagentreport.com?challenge=${results.overallScore}`;
+        const shareText = shareConfig.challengeText;
+
         return (
           <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm">
             <h3 className="text-lg font-bold text-slate-900 mb-1">{shareConfig.heading}</h3>
@@ -1419,9 +1480,11 @@ function ScreenResults({
                 <span className={`inline-block px-2 py-0.5 rounded text-xs ${tier.bg} ${tier.color}`}>{tier.label}</span>
               </div>
               {badge ? (
-                <div className="text-xs text-emerald-300/80 mt-2 font-semibold">Verified {badge.badge} — Real Agent Report</div>
-              ) : (
+                <div className="text-xs text-emerald-300/80 mt-2 font-semibold">Verified {badge.badge} -- Real Agent Report</div>
+              ) : results.estimatedLostCommission > 0 ? (
                 <div className="text-xs text-blue-200/60 mt-2">Commission Leak: {commissionLeak}/yr</div>
+              ) : (
+                <div className="text-xs text-emerald-300/60 mt-2">Outperforming the benchmark</div>
               )}
               <div className="text-[10px] text-blue-300/40 mt-3">realagentreport.com</div>
             </div>
@@ -1435,44 +1498,101 @@ function ScreenResults({
               </div>
             )}
 
-            {/* Share buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={onShare}
-                className={`inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border-2 transition-all ${
-                  copied
-                    ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700'
-                }`}
-              >
-                {copied ? (
-                  <>
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Copy Link
-                  </>
-                )}
-              </button>
-              <button
-                onClick={onChallenge}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border-2 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 transition-all"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                </svg>
-                {badge ? 'Challenge Another Agent' : 'Send to Your Office'}
-              </button>
+            {/* Social share buttons */}
+            <div className="mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Share Your Score</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {/* Facebook */}
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#1877F2] text-white hover:bg-[#166FE5] transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                  Facebook
+                </a>
+
+                {/* X / Twitter */}
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-black text-white hover:bg-gray-800 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  Post
+                </a>
+
+                {/* LinkedIn */}
+                <a
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#0A66C2] text-white hover:bg-[#004182] transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                  LinkedIn
+                </a>
+
+                {/* WhatsApp */}
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                  WhatsApp
+                </a>
+
+                {/* SMS / iMessage */}
+                <a
+                  href={`sms:?&body=${encodeURIComponent(shareText + ' ' + shareUrl)}`}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                  Text
+                </a>
+
+                {/* Email */}
+                <a
+                  href={`mailto:?subject=${encodeURIComponent('Think you can beat my Agent Performance Score?')}&body=${encodeURIComponent(shareText + '\n\n' + shareUrl)}`}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-gray-600 text-white hover:bg-gray-700 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                  Email
+                </a>
+              </div>
             </div>
 
-            <p className="text-gray-400 text-xs mt-4">{shareConfig.sharePrompt}</p>
+            {/* Copy link button */}
+            <button
+              onClick={onShare}
+              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm border-2 transition-all ${
+                copied
+                  ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+                  : 'border-gray-200 bg-white text-gray-700 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700'
+              }`}
+            >
+              {copied ? (
+                <>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Link Copied!
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy Challenge Link
+                </>
+              )}
+            </button>
+
+            <p className="text-gray-400 text-xs mt-4">Challenge your office - see who&apos;s really on top</p>
           </div>
         );
       })()}

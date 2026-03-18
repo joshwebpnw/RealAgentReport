@@ -109,25 +109,21 @@ export function calculateAuditScore(input: AuditInput): AuditScoreResult {
 
   const { ranking, percentile } = getMarketRanking(overallScore);
 
-  // Income gap analysis
-  // Benchmark: 8% conversion rate, 38 deals/yr for top agents
+  // Income analysis
+  // Benchmark: 8% conversion rate, 38 deals/yr cap for top agents
   const BENCHMARK_CONVERSION = 8;
   const BENCHMARK_DEALS_PER_YEAR = 38;
-  const DEAL_RECOVERY_RATE = 0.35; // 35% of lost deals recoverable
+  const DEAL_RECOVERY_RATE = 0.35; // 35% of lost deals recoverable with automation
 
-  const currentDealsPerYear = (input.leadsPerMonth * 12 * input.conversionRate) / 100;
+  const annualLeads = input.leadsPerMonth * 12;
+  const currentDealsPerYear = (annualLeads * input.conversionRate) / 100;
   const currentEstimatedIncome = currentDealsPerYear * input.avgCommission;
-  const topAgentDeals = Math.min(input.leadsPerMonth * 12 * BENCHMARK_CONVERSION / 100, BENCHMARK_DEALS_PER_YEAR);
+  const topAgentDeals = Math.min(annualLeads * BENCHMARK_CONVERSION / 100, BENCHMARK_DEALS_PER_YEAR);
   const topAgentIncome = topAgentDeals * input.avgCommission;
 
   const lostDeals = Math.max(0, topAgentDeals - currentDealsPerYear);
-  const recoverableDeals = lostDeals * DEAL_RECOVERY_RATE;
-  const rawRecoverable = Math.round(recoverableDeals * input.avgCommission);
-  const rawLostCommission = Math.round(lostDeals * input.avgCommission);
-  // Never show $0 — even top agents have missed opportunity via speed/follow-up gaps
-  // Floor: at least 2 deals worth of commission as missed opportunity
-  const estimatedLostCommission = Math.max(rawLostCommission, input.avgCommission * 2);
-  const recoverableAmount = Math.max(rawRecoverable, Math.round(estimatedLostCommission * DEAL_RECOVERY_RATE));
+  const estimatedLostCommission = Math.round(lostDeals * input.avgCommission);
+  const recoverableAmount = Math.round(lostDeals * DEAL_RECOVERY_RATE * input.avgCommission);
 
   // Speed benchmark description
   let speedBenchmark = '< 5 minutes (top agents)';
