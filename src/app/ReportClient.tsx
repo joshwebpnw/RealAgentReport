@@ -119,9 +119,9 @@ const STEP_SCREENS: Screen[] = [
 ];
 
 const SCORE_TIERS: { min: number; label: string; color: string; bg: string }[] = [
-  { min: 75, label: 'Elite', color: 'text-emerald-700', bg: 'bg-emerald-100' },
-  { min: 65, label: 'High Performer', color: 'text-blue-700', bg: 'bg-blue-100' },
-  { min: 55, label: 'Above Average', color: 'text-indigo-700', bg: 'bg-indigo-100' },
+  { min: 80, label: 'Elite', color: 'text-emerald-700', bg: 'bg-emerald-100' },
+  { min: 70, label: 'High Performer', color: 'text-blue-700', bg: 'bg-blue-100' },
+  { min: 57, label: 'Above Average', color: 'text-indigo-700', bg: 'bg-indigo-100' },
   { min: 40, label: 'Falling Behind', color: 'text-amber-700', bg: 'bg-amber-100' },
   { min: 0, label: 'At Risk', color: 'text-red-700', bg: 'bg-red-100' },
 ];
@@ -1244,33 +1244,18 @@ function ScreenResults({
 
   return (
     <div className="space-y-8">
-      {/* Hero - driven by overall score, not just conversion */}
+      {/* Hero - always show missed opportunity */}
       <div className="bg-gradient-to-br from-slate-900 to-brand-900 rounded-2xl p-6 sm:p-8 text-white text-center">
-        {results.overallScore >= 75 ? (
-          <>
-            <div className="inline-block bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
-              Top Performer Identified
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold mb-3 leading-tight">
-              You&apos;re outperforming{' '}
-              <span className="text-emerald-400">the benchmark.</span>
-              <span className="block text-lg font-semibold text-blue-200 mt-2">Automation can help you maintain this edge and scale further.</span>
-            </h1>
-          </>
-        ) : (
-          <>
-            <div className="inline-block bg-red-500/20 border border-red-400/40 text-red-200 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
-              Missed Opportunity Detected
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold mb-3 leading-tight">
-              Your estimated missed opportunity:{' '}
-              <span className="text-amber-400">{commissionLeak}</span>
-              <span className="block text-lg font-semibold text-blue-200 mt-2">per year with faster response and better follow-up.</span>
-            </h1>
-            {weeksLine && (
-              <p className="text-blue-200 text-sm">{weeksLine}</p>
-            )}
-          </>
+        <div className="inline-block bg-red-500/20 border border-red-400/40 text-red-200 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
+          Missed Opportunity Detected
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold mb-3 leading-tight">
+          Your estimated missed opportunity:{' '}
+          <span className="text-amber-400">{commissionLeak}</span>
+          <span className="block text-lg font-semibold text-blue-200 mt-2">per year with faster response and better follow-up.</span>
+        </h1>
+        {weeksLine && (
+          <p className="text-blue-200 text-sm">{weeksLine}</p>
         )}
       </div>
 
@@ -1302,12 +1287,6 @@ function ScreenResults({
           </p>
         </div>
       )}
-
-      {/* Share bar - top */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Challenge your office - share your score</p>
-        <SocialShareBar shareText={shareText} shareUrl={shareUrl} onCopy={onShare} copied={copied} compact />
-      </div>
 
       {/* Score section - right after missed opportunity */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm">
@@ -1356,6 +1335,12 @@ function ScreenResults({
             </div>
           );
         })()}
+      </div>
+
+      {/* Share bar - below score */}
+      <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Challenge your office - share your score</p>
+        <SocialShareBar shareText={shareText} shareUrl={shareUrl} onCopy={onShare} copied={copied} compact />
       </div>
 
       {/* Metric cards - always show lost commission */}
@@ -1424,7 +1409,7 @@ function ScreenResults({
         </div>
       </div>
 
-      {/* Income Analysis - always show lost commissions */}
+      {/* Income Analysis */}
       <div className="bg-gradient-to-r from-brand-50 to-indigo-50 border border-brand-200 rounded-2xl p-6">
         <h3 className="text-lg font-bold text-slate-900 mb-2">Income Analysis</h3>
         <div className="bg-white rounded-xl p-4 border border-gray-100 space-y-3">
@@ -1440,7 +1425,6 @@ function ScreenResults({
             <span className="text-xs font-semibold text-gray-600">What You Could Be Earning</span>
             <span className="text-sm font-bold text-emerald-700">{formatCurrency(results.incomeGap.currentEstimatedIncome + results.estimatedLostCommission)}</span>
           </div>
-
           <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3">
             <div className="text-center">
               <div className="text-lg font-bold text-red-600">{commissionLeak}</div>

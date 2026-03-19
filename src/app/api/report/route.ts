@@ -68,10 +68,10 @@ export async function POST(req: NextRequest) {
     );
     let lostDeals = Math.max(0, potentialDeals - currentDeals);
 
-    // Even high-conversion agents lose deals to slow speed & weak follow-up.
-    // Floor: at least 15% of current deals when overall score < 75.
-    if (lostDeals < 1 && overallScore < 75) {
-      lostDeals = Math.max(2, Math.ceil(currentDeals * 0.15));
+    // Every agent loses some deals to speed & follow-up gaps, even top performers.
+    // Floor: at least 2 lost deals.
+    if (lostDeals < 2) {
+      lostDeals = Math.max(2, Math.ceil(currentDeals * 0.10));
     }
 
     const commissionLeak = Math.round(lostDeals * avgCommission);

@@ -76,7 +76,7 @@ function normalCDF(x: number, mean: number, sd: number): number {
 }
 
 const BELL_CURVE_MEAN = 45;
-const BELL_CURVE_SD = 18;
+const BELL_CURVE_SD = 21.5;
 
 export function scoreToPercentile(overallScore: number): number {
   const raw = normalCDF(overallScore, BELL_CURVE_MEAN, BELL_CURVE_SD) * 100;
@@ -88,7 +88,7 @@ export function getMarketRanking(overallScore: number): { ranking: string; perce
   const pct = scoreToPercentile(overallScore);
   let ranking: string;
   if (pct >= 95) ranking = 'Elite';
-  else if (pct >= 87) ranking = 'High Performer';
+  else if (pct >= 88) ranking = 'High Performer';
   else if (pct >= 71) ranking = 'Above Average';
   else if (pct >= 39) ranking = 'Falling Behind';
   else ranking = 'At Risk';
@@ -123,11 +123,11 @@ export function calculateAuditScore(input: AuditInput): AuditScoreResult {
 
   let lostDeals = Math.max(0, topAgentDeals - currentDealsPerYear);
 
-  // Even high-conversion agents lose deals to slow speed & weak follow-up.
-  // Agents don't see the leads that never responded because they were too slow.
-  // Floor: at least 15% of current deals as missed opportunity when score < 75.
-  if (lostDeals < 1 && overallScore < 75) {
-    lostDeals = Math.max(2, Math.ceil(currentDealsPerYear * 0.15));
+  // Every agent loses some deals to speed & follow-up gaps, even top performers.
+  // Agents don't see the leads that ghosted because they were too slow.
+  // Floor: at least 2 lost deals (scales down for elite agents).
+  if (lostDeals < 2) {
+    lostDeals = Math.max(2, Math.ceil(currentDealsPerYear * 0.10));
   }
 
   const estimatedLostCommission = Math.round(lostDeals * input.avgCommission);
