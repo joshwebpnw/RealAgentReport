@@ -76,7 +76,7 @@ function normalCDF(x: number, mean: number, sd: number): number {
 }
 
 const BELL_CURVE_MEAN = 45;
-const BELL_CURVE_SD = 21.5;
+const BELL_CURVE_SD = 31.2;
 
 export function scoreToPercentile(overallScore: number): number {
   const raw = normalCDF(overallScore, BELL_CURVE_MEAN, BELL_CURVE_SD) * 100;
@@ -87,10 +87,10 @@ export function scoreToPercentile(overallScore: number): number {
 export function getMarketRanking(overallScore: number): { ranking: string; percentile: string } {
   const pct = scoreToPercentile(overallScore);
   let ranking: string;
-  if (pct >= 95) ranking = 'Elite';
-  else if (pct >= 88) ranking = 'High Performer';
-  else if (pct >= 71) ranking = 'Above Average';
-  else if (pct >= 39) ranking = 'Falling Behind';
+  if (pct >= 93) ranking = 'Elite';
+  else if (pct >= 87) ranking = 'High Performer';
+  else if (pct >= 68) ranking = 'Above Average';
+  else if (pct >= 40) ranking = 'Falling Behind';
   else ranking = 'At Risk';
 
   const percentileLabel = pct >= 50 ? `Top ${100 - pct}%` : `Bottom ${pct}%`;

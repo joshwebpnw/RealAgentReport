@@ -119,9 +119,9 @@ const STEP_SCREENS: Screen[] = [
 ];
 
 const SCORE_TIERS: { min: number; label: string; color: string; bg: string }[] = [
-  { min: 80, label: 'Elite', color: 'text-emerald-700', bg: 'bg-emerald-100' },
-  { min: 70, label: 'High Performer', color: 'text-blue-700', bg: 'bg-blue-100' },
-  { min: 57, label: 'Above Average', color: 'text-indigo-700', bg: 'bg-indigo-100' },
+  { min: 90, label: 'Elite', color: 'text-emerald-700', bg: 'bg-emerald-100' },
+  { min: 80, label: 'High Performer', color: 'text-blue-700', bg: 'bg-blue-100' },
+  { min: 60, label: 'Above Average', color: 'text-indigo-700', bg: 'bg-indigo-100' },
   { min: 40, label: 'Falling Behind', color: 'text-amber-700', bg: 'bg-amber-100' },
   { min: 0, label: 'At Risk', color: 'text-red-700', bg: 'bg-red-100' },
 ];
