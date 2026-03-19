@@ -66,7 +66,14 @@ export async function POST(req: NextRequest) {
       Math.round(leadsPerYear * (BENCHMARK_CONVERSION / 100)),
       BENCHMARK_DEALS_PER_YEAR
     );
-    const lostDeals = Math.max(0, potentialDeals - currentDeals);
+    let lostDeals = Math.max(0, potentialDeals - currentDeals);
+
+    // Even high-conversion agents lose deals to slow speed & weak follow-up.
+    // Floor: at least 15% of current deals when overall score < 75.
+    if (lostDeals < 1 && overallScore < 75) {
+      lostDeals = Math.max(2, Math.ceil(currentDeals * 0.15));
+    }
+
     const commissionLeak = Math.round(lostDeals * avgCommission);
     const weeksPerLostDeal = lostDeals > 0 ? Math.round(52 / lostDeals) : 0;
 

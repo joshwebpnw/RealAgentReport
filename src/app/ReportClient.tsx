@@ -373,11 +373,22 @@ function computeResults(data: FormData): ScoreResult | null {
   const BENCHMARK_CONVERSION = 8;
   const currentDeals = (annualLeads * conversionRate) / 100;
   const topDeals = Math.min((annualLeads * BENCHMARK_CONVERSION) / 100, 38);
-  const lostDeals = Math.max(0, topDeals - currentDeals);
+  let lostDeals = Math.max(0, topDeals - currentDeals);
+
+  // Even high-conversion agents lose deals to slow speed & weak follow-up.
+  // Floor: at least 15% of current deals as missed opportunity when score < 75.
+  if (lostDeals < 1 && base.overallScore < 75) {
+    lostDeals = Math.max(2, Math.ceil(currentDeals * 0.15));
+  }
+
   const weeksPerLostDeal = lostDeals > 0 ? Math.round(52 / lostDeals) : 999;
+
+  // Override estimatedLostCommission with the floor-adjusted lostDeals
+  const adjustedLostCommission = Math.round(lostDeals * avgCommission);
 
   return {
     ...base,
+    estimatedLostCommission: Math.max(base.estimatedLostCommission, adjustedLostCommission),
     currentDeals: Math.round(currentDeals),
     lostDeals: Math.round(lostDeals),
     weeksPerLostDeal,
@@ -1187,9 +1198,20 @@ function ScreenResults({
 
   return (
     <div className="space-y-8">
-      {/* Hero */}
+      {/* Hero - driven by overall score, not just conversion */}
       <div className="bg-gradient-to-br from-slate-900 to-brand-900 rounded-2xl p-6 sm:p-8 text-white text-center">
-        {results.estimatedLostCommission > 0 ? (
+        {results.overallScore >= 75 ? (
+          <>
+            <div className="inline-block bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
+              Top Performer Identified
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold mb-3 leading-tight">
+              You&apos;re outperforming{' '}
+              <span className="text-emerald-400">the benchmark.</span>
+              <span className="block text-lg font-semibold text-blue-200 mt-2">Automation can help you maintain this edge and scale further.</span>
+            </h1>
+          </>
+        ) : (
           <>
             <div className="inline-block bg-red-500/20 border border-red-400/40 text-red-200 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
               Missed Opportunity Detected
@@ -1203,21 +1225,10 @@ function ScreenResults({
               <p className="text-blue-200 text-sm">{weeksLine}</p>
             )}
           </>
-        ) : (
-          <>
-            <div className="inline-block bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">
-              Top Performer Identified
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold mb-3 leading-tight">
-              You&apos;re outperforming{' '}
-              <span className="text-emerald-400">the benchmark.</span>
-              <span className="block text-lg font-semibold text-blue-200 mt-2">Automation can help you maintain this edge and scale further.</span>
-            </h1>
-          </>
         )}
       </div>
 
-      {/* Metric cards */}
+      {/* Metric cards - always show lost commission */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <MetricCard
           label="Your Closings"
@@ -1226,16 +1237,16 @@ function ScreenResults({
           highlight="blue"
         />
         <MetricCard
-          label={results.lostDeals > 0 ? "Deals You're Leaving Behind" : "Benchmark Deals"}
-          value={results.lostDeals > 0 ? `${results.lostDeals}` : `${results.currentDeals + results.lostDeals}`}
-          sub={results.lostDeals > 0 ? 'vs. 8% benchmark conversion' : 'You exceed the benchmark'}
-          highlight={results.lostDeals > 0 ? 'red' : 'blue'}
+          label="Deals You Could Be Missing"
+          value={`${Math.max(results.lostDeals, Math.ceil(results.currentDeals * 0.15))}`}
+          sub="Due to speed & follow-up gaps"
+          highlight="red"
         />
         <MetricCard
-          label={results.estimatedLostCommission > 0 ? "Projected Commission Leak" : "Your Est. Annual Commission"}
-          value={results.estimatedLostCommission > 0 ? commissionLeak : currentIncome}
-          sub={results.estimatedLostCommission > 0 ? "Next 12 months at current rate" : "Based on your closings"}
-          highlight={results.estimatedLostCommission > 0 ? 'red' : 'blue'}
+          label="Projected Commission Leak"
+          value={commissionLeak}
+          sub="Next 12 months at current rate"
+          highlight="red"
         />
       </div>
 
@@ -1347,64 +1358,34 @@ function ScreenResults({
         </div>
       </div>
 
-      {/* Income Analysis */}
+      {/* Income Gap - always show lost commissions */}
       <div className="bg-gradient-to-r from-brand-50 to-indigo-50 border border-brand-200 rounded-2xl p-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-2">Income Analysis</h3>
-        <p className="text-xs text-gray-500 mb-4">Based on your inputs vs. top-agent benchmarks (8% conversion rate, capped at 38 deals/yr)</p>
+        <h3 className="text-lg font-bold text-slate-900 mb-2">Your Income Gap</h3>
+        <div className="bg-white rounded-xl p-4 border border-gray-100 space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-semibold text-gray-600">Your Est. Annual Commission</span>
+            <span className="text-sm font-bold text-gray-700">{currentIncome}</span>
+          </div>
+          <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
+            <div className="absolute inset-y-0 left-0 bg-emerald-400/40 rounded-full" style={{ width: '100%' }} />
+            <div className="absolute inset-y-0 left-0 bg-brand-500 rounded-full" style={{ width: `${Math.min(100, (results.incomeGap.currentEstimatedIncome / Math.max(results.incomeGap.currentEstimatedIncome + results.estimatedLostCommission, 1)) * 100)}%` }} />
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-semibold text-gray-600">What You Could Be Earning</span>
+            <span className="text-sm font-bold text-emerald-700">{formatCurrency(results.incomeGap.currentEstimatedIncome + results.estimatedLostCommission)}</span>
+          </div>
 
-        {/* Your numbers row */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="bg-white rounded-xl p-3 text-center border border-gray-100">
-            <div className="text-xl font-bold text-gray-800">{results.currentDeals}</div>
-            <div className="text-[10px] text-gray-500 mt-0.5 leading-tight">Your Closings<br/>(Last 12 Mo)</div>
-          </div>
-          <div className="bg-white rounded-xl p-3 text-center border border-gray-100">
-            <div className="text-xl font-bold text-gray-800">{results.conversionBreakdown.input.toFixed(1)}%</div>
-            <div className="text-[10px] text-gray-500 mt-0.5 leading-tight">Your Conversion<br/>Rate</div>
-          </div>
-          <div className="bg-white rounded-xl p-3 text-center border border-gray-100">
-            <div className="text-xl font-bold text-gray-800">{currentIncome}</div>
-            <div className="text-[10px] text-gray-500 mt-0.5 leading-tight">Your Est. Annual<br/>Commission</div>
+          <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3">
+            <div className="text-center">
+              <div className="text-lg font-bold text-red-600">{commissionLeak}</div>
+              <div className="text-[10px] text-gray-500">Lost Commission Per Year</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-emerald-700">{recoverable}</div>
+              <div className="text-[10px] text-gray-500">Recoverable with Automation</div>
+            </div>
           </div>
         </div>
-
-        {/* Comparison bar */}
-        {results.lostDeals > 0 ? (
-          <div className="bg-white rounded-xl p-4 border border-gray-100 space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-semibold text-gray-600">Your Income</span>
-              <span className="text-sm font-bold text-gray-700">{currentIncome}</span>
-            </div>
-            <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div className="absolute inset-y-0 left-0 bg-brand-500 rounded-full" style={{ width: `${Math.min(100, (results.incomeGap.currentEstimatedIncome / Math.max(results.incomeGap.topAgentIncome, 1)) * 100)}%` }} />
-              <div className="absolute inset-y-0 left-0 bg-emerald-400/40 rounded-full" style={{ width: '100%' }} />
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-semibold text-gray-600">Benchmark Income</span>
-              <span className="text-sm font-bold text-emerald-700">{topIncome}</span>
-            </div>
-
-            <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3">
-              <div className="text-center">
-                <div className="text-lg font-bold text-red-600">{results.lostDeals} deals</div>
-                <div className="text-[10px] text-gray-500">You&apos;re Leaving on the Table</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-emerald-700">{recoverable}</div>
-                <div className="text-[10px] text-gray-500">Recoverable with Automation</div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-            <div className="text-2xl mb-1">&#127942;</div>
-            <div className="text-sm font-bold text-emerald-800">You&apos;re outperforming the benchmark!</div>
-            <p className="text-xs text-emerald-600 mt-1">
-              Your {results.conversionBreakdown.input.toFixed(1)}% conversion rate beats the 8% top-agent benchmark.
-              Automation can help you maintain this edge at scale.
-            </p>
-          </div>
-        )}
       </div>
 
       {/* 3-step improvement plan */}
@@ -1481,10 +1462,8 @@ function ScreenResults({
               </div>
               {badge ? (
                 <div className="text-xs text-emerald-300/80 mt-2 font-semibold">Verified {badge.badge} -- Real Agent Report</div>
-              ) : results.estimatedLostCommission > 0 ? (
-                <div className="text-xs text-blue-200/60 mt-2">Commission Leak: {commissionLeak}/yr</div>
               ) : (
-                <div className="text-xs text-emerald-300/60 mt-2">Outperforming the benchmark</div>
+                <div className="text-xs text-blue-200/60 mt-2">Commission Leak: {commissionLeak}/yr</div>
               )}
               <div className="text-[10px] text-blue-300/40 mt-3">realagentreport.com</div>
             </div>

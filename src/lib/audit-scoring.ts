@@ -121,7 +121,15 @@ export function calculateAuditScore(input: AuditInput): AuditScoreResult {
   const topAgentDeals = Math.min(annualLeads * BENCHMARK_CONVERSION / 100, BENCHMARK_DEALS_PER_YEAR);
   const topAgentIncome = topAgentDeals * input.avgCommission;
 
-  const lostDeals = Math.max(0, topAgentDeals - currentDealsPerYear);
+  let lostDeals = Math.max(0, topAgentDeals - currentDealsPerYear);
+
+  // Even high-conversion agents lose deals to slow speed & weak follow-up.
+  // Agents don't see the leads that never responded because they were too slow.
+  // Floor: at least 15% of current deals as missed opportunity when score < 75.
+  if (lostDeals < 1 && overallScore < 75) {
+    lostDeals = Math.max(2, Math.ceil(currentDealsPerYear * 0.15));
+  }
+
   const estimatedLostCommission = Math.round(lostDeals * input.avgCommission);
   const recoverableAmount = Math.round(lostDeals * DEAL_RECOVERY_RATE * input.avgCommission);
 
