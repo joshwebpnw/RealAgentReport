@@ -1408,9 +1408,9 @@ function ScreenResults({
         </div>
       </div>
 
-      {/* Income Gap - always show lost commissions */}
+      {/* Income Analysis - always show lost commissions */}
       <div className="bg-gradient-to-r from-brand-50 to-indigo-50 border border-brand-200 rounded-2xl p-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-2">Your Income Gap</h3>
+        <h3 className="text-lg font-bold text-slate-900 mb-2">Income Analysis</h3>
         <div className="bg-white rounded-xl p-4 border border-gray-100 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold text-gray-600">Your Est. Annual Commission</span>
