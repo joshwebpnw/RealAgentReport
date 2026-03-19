@@ -1307,29 +1307,7 @@ function ScreenResults({
         <SocialShareBar shareText={shareText} shareUrl={shareUrl} onCopy={onShare} copied={copied} compact />
       </div>
 
-      {/* Metric cards - always show lost commission */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <MetricCard
-          label="Your Closings"
-          value={`${results.currentDeals}`}
-          sub="Last 12 months"
-          highlight="blue"
-        />
-        <MetricCard
-          label="Deals You Could Be Missing"
-          value={`${Math.max(results.lostDeals, Math.ceil(results.currentDeals * 0.15))}`}
-          sub="Due to speed & follow-up gaps"
-          highlight="red"
-        />
-        <MetricCard
-          label="Projected Commission Leak"
-          value={commissionLeak}
-          sub="Next 12 months at current rate"
-          highlight="red"
-        />
-      </div>
-
-      {/* Score section */}
+      {/* Score section - right after missed opportunity */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm">
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <div className="flex-shrink-0">
@@ -1362,6 +1340,28 @@ function ScreenResults({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Metric cards - always show lost commission */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <MetricCard
+          label="Your Closings"
+          value={`${results.currentDeals}`}
+          sub="Last 12 months"
+          highlight="blue"
+        />
+        <MetricCard
+          label="Deals You Could Be Missing"
+          value={`${Math.max(results.lostDeals, Math.ceil(results.currentDeals * 0.15))}`}
+          sub="Due to speed & follow-up gaps"
+          highlight="red"
+        />
+        <MetricCard
+          label="Projected Commission Leak"
+          value={commissionLeak}
+          sub="Next 12 months at current rate"
+          highlight="red"
+        />
       </div>
 
       {/* Benchmark comparison */}
