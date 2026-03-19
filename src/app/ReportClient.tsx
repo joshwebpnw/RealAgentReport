@@ -1272,6 +1272,35 @@ function ScreenResults({
         )}
       </div>
 
+      {/* Challenge comparison - show at top when someone came from a challenge link */}
+      {challengeScore !== null && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-6 shadow-sm text-center">
+          <div className="text-xs uppercase tracking-widest font-bold text-amber-600 mb-3">Challenge Result</div>
+          <div className="flex items-center justify-center gap-6">
+            <div>
+              <div className="text-sm text-gray-500 font-medium mb-1">Their Score</div>
+              <div className="text-3xl font-extrabold text-gray-400">{challengeScore}</div>
+            </div>
+            <div className="text-2xl font-bold text-gray-300">vs</div>
+            <div>
+              <div className="text-sm text-gray-500 font-medium mb-1">Your Score</div>
+              <div className={`text-3xl font-extrabold ${results.overallScore > challengeScore ? 'text-emerald-600' : results.overallScore < challengeScore ? 'text-red-600' : 'text-amber-600'}`}>
+                {results.overallScore}
+              </div>
+            </div>
+          </div>
+          <p className="mt-3 text-sm font-semibold">
+            {results.overallScore > challengeScore ? (
+              <span className="text-emerald-700">You beat their score by {results.overallScore - challengeScore} points! Now challenge another agent.</span>
+            ) : results.overallScore < challengeScore ? (
+              <span className="text-red-700">They beat you by {challengeScore - results.overallScore} points. See below how to improve your score.</span>
+            ) : (
+              <span className="text-amber-700">It&apos;s a tie! See below how to pull ahead.</span>
+            )}
+          </p>
+        </div>
+      )}
+
       {/* Share bar - top */}
       <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Challenge your office - share your score</p>
@@ -1334,35 +1363,6 @@ function ScreenResults({
           </div>
         </div>
       </div>
-
-      {/* Challenge comparison */}
-      {challengeScore !== null && (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-6 shadow-sm text-center">
-          <div className="text-xs uppercase tracking-widest font-bold text-amber-600 mb-3">Challenge Result</div>
-          <div className="flex items-center justify-center gap-6">
-            <div>
-              <div className="text-sm text-gray-500 font-medium mb-1">Their Score</div>
-              <div className="text-3xl font-extrabold text-gray-400">{challengeScore}</div>
-            </div>
-            <div className="text-2xl font-bold text-gray-300">vs</div>
-            <div>
-              <div className="text-sm text-gray-500 font-medium mb-1">Your Score</div>
-              <div className={`text-3xl font-extrabold ${results.overallScore > challengeScore ? 'text-emerald-600' : results.overallScore < challengeScore ? 'text-red-600' : 'text-amber-600'}`}>
-                {results.overallScore}
-              </div>
-            </div>
-          </div>
-          <p className="mt-3 text-sm font-semibold">
-            {results.overallScore > challengeScore ? (
-              <span className="text-emerald-700">You beat their score by {results.overallScore - challengeScore} points! Now challenge another agent.</span>
-            ) : results.overallScore < challengeScore ? (
-              <span className="text-red-700">They beat you by {challengeScore - results.overallScore} points. See below how to improve your score.</span>
-            ) : (
-              <span className="text-amber-700">It&apos;s a tie! See below how to pull ahead.</span>
-            )}
-          </p>
-        </div>
-      )}
 
       {/* Benchmark comparison */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
