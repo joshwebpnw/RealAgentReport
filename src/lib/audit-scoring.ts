@@ -79,15 +79,22 @@ const BELL_CURVE_MEAN = 45;
 const BELL_CURVE_SD = 31.2;
 
 export function scoreToPercentile(overallScore: number): number {
+  // Fixed top-end percentiles (not achievable with a single bell curve)
+  if (overallScore >= 97) return 99;  // Top 1%
+  if (overallScore >= 95) return 97;  // Top 3%
+  if (overallScore >= 93) return 95;  // Top 5%
+  if (overallScore >= 90) return 90;  // Top 10%
+
+  // Bell curve for everything below 90
   const raw = normalCDF(overallScore, BELL_CURVE_MEAN, BELL_CURVE_SD) * 100;
-  // Clamp to 1-99 range (never show 0th or 100th percentile)
-  return Math.round(Math.max(1, Math.min(99, raw)));
+  // Clamp to 1-89 range (top end handled above)
+  return Math.round(Math.max(1, Math.min(89, raw)));
 }
 
 export function getMarketRanking(overallScore: number): { ranking: string; percentile: string } {
   const pct = scoreToPercentile(overallScore);
   let ranking: string;
-  if (pct >= 93) ranking = 'Elite';
+  if (pct >= 95) ranking = 'Elite';
   else if (pct >= 87) ranking = 'High Performer';
   else if (pct >= 68) ranking = 'Above Average';
   else if (pct >= 40) ranking = 'Falling Behind';
