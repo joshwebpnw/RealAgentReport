@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { calculateAuditScore } from '@/lib/audit-scoring';
+import { calculateAuditScore, scoreToPercentile } from '@/lib/audit-scoring';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -127,14 +127,16 @@ const SCORE_TIERS: { min: number; label: string; color: string; bg: string }[] =
 ];
 
 // Badge config for top 20% agents
-const BADGES: { min: number; badge: string; badgeColor: string; badgeBg: string; badgeBorder: string; icon: string }[] = [
-  { min: 90, badge: 'Top 5% Agent', badgeColor: 'text-amber-900', badgeBg: 'bg-gradient-to-br from-amber-300 to-yellow-500', badgeBorder: 'border-amber-400', icon: '🏆' },
-  { min: 80, badge: 'Top 10% Agent', badgeColor: 'text-slate-800', badgeBg: 'bg-gradient-to-br from-gray-200 to-gray-400', badgeBorder: 'border-gray-400', icon: '🥈' },
-  { min: 70, badge: 'Top 20% Agent', badgeColor: 'text-amber-900', badgeBg: 'bg-gradient-to-br from-orange-300 to-amber-600', badgeBorder: 'border-amber-500', icon: '🥉' },
+// Badge tiers based on bell curve percentile
+const BADGES: { minPct: number; badge: string; tier: string; badgeColor: string; badgeBg: string; badgeBorder: string; icon: string }[] = [
+  { minPct: 95, badge: 'Top 5% Agent', tier: 'Gold', badgeColor: 'text-amber-900', badgeBg: 'bg-gradient-to-br from-amber-300 to-yellow-500', badgeBorder: 'border-amber-400', icon: '🏆' },
+  { minPct: 90, badge: 'Top 10% Agent', tier: 'Silver', badgeColor: 'text-slate-800', badgeBg: 'bg-gradient-to-br from-gray-200 to-gray-400', badgeBorder: 'border-gray-400', icon: '🥈' },
+  { minPct: 80, badge: 'Top 20% Agent', tier: 'Bronze', badgeColor: 'text-amber-900', badgeBg: 'bg-gradient-to-br from-orange-300 to-amber-600', badgeBorder: 'border-amber-500', icon: '🥉' },
 ];
 
 function getBadge(score: number) {
-  return BADGES.find((b) => score >= b.min) ?? null;
+  const pct = scoreToPercentile(score);
+  return BADGES.find((b) => pct >= b.minPct) ?? null;
 }
 
 // Score-based CTA hooks for Agent Assistant
@@ -1340,6 +1342,20 @@ function ScreenResults({
             </div>
           </div>
         </div>
+        {/* Badge for top agents */}
+        {(() => {
+          const badge = getBadge(results.overallScore);
+          if (!badge) return null;
+          return (
+            <div className="mt-5 pt-5 border-t border-gray-100 text-center">
+              <div className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full border-2 ${badge.badgeBorder} ${badge.badgeBg} shadow-md`}>
+                <span className="text-xl">{badge.icon}</span>
+                <span className={`font-extrabold text-sm ${badge.badgeColor}`}>{badge.tier} Badge - Certified {badge.badge}</span>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">Verified by Real Agent Report</p>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Metric cards - always show lost commission */}
