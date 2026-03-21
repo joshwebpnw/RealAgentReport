@@ -1901,6 +1901,11 @@ export default function ReportPage() {
         <p className="text-center text-xs text-gray-400 mt-5">
           No spam. No credit card. Just your real agent performance data.
         </p>
+        <div className="flex justify-center gap-4 mt-3 text-xs text-gray-400">
+          <a href="/privacy" className="hover:text-gray-600 transition-colors">Privacy Policy</a>
+          <span>|</span>
+          <a href="/terms" className="hover:text-gray-600 transition-colors">Terms of Service</a>
+        </div>
       </div>
     </div>
   );
