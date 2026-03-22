@@ -1758,6 +1758,11 @@ export default function ReportPage() {
         className={`transition-opacity duration-200 ${animating ? 'opacity-0' : 'opacity-100'}`}
       >
         <ScreenLanding onStart={() => goTo('closings')} challengeScore={challengeScore} />
+        <div className="flex justify-center gap-4 py-6 text-xs text-gray-400">
+          <a href="/privacy" className="hover:text-gray-300 transition-colors">Privacy Policy</a>
+          <span>|</span>
+          <a href="/terms" className="hover:text-gray-300 transition-colors">Terms of Service</a>
+        </div>
       </div>
     );
   }
@@ -1788,6 +1793,11 @@ export default function ReportPage() {
             copied={copied}
             challengeScore={challengeScore}
           />
+          <div className="flex justify-center gap-4 mt-8 pb-6 text-xs text-gray-400">
+            <a href="/privacy" className="hover:text-gray-600 transition-colors">Privacy Policy</a>
+            <span>|</span>
+            <a href="/terms" className="hover:text-gray-600 transition-colors">Terms of Service</a>
+          </div>
         </div>
       </div>
     );
