@@ -91,7 +91,7 @@ export default function TermsOfService() {
             <p>If you have questions about these Terms, contact us at:</p>
             <p className="mt-2">
               <strong>Real Agent Systems, LLC</strong><br />
-              Email: josh@patriotpulsedigital.com
+              Email: contact@realagentlabs.com
             </p>
           </section>
         </div>

@@ -75,7 +75,7 @@ export default function PrivacyPolicy() {
               <li>Request deletion of your data</li>
               <li>Opt out of marketing communications at any time</li>
             </ul>
-            <p className="mt-3">To exercise these rights, contact us at josh@patriotpulsedigital.com.</p>
+            <p className="mt-3">To exercise these rights, contact us at contact@realagentlabs.com.</p>
           </section>
 
           <section>
@@ -98,7 +98,7 @@ export default function PrivacyPolicy() {
             <p>If you have questions about this privacy policy, contact us at:</p>
             <p className="mt-2">
               <strong>Real Agent Systems, LLC</strong><br />
-              Email: josh@patriotpulsedigital.com
+              Email: contact@realagentlabs.com
             </p>
           </section>
         </div>
