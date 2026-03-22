@@ -20,7 +20,7 @@ export default function TermsOfService() {
         <div className="prose prose-gray max-w-none space-y-6 text-gray-700 leading-relaxed">
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-3">1. Acceptance of Terms</h2>
-            <p>By accessing or using Real Agent Report (&quot;the Service&quot;), operated by Patriot Pulse Digital LLC (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.</p>
+            <p>By accessing or using Real Agent Report (&quot;the Service&quot;), operated by Real Agent Systems, LLC (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.</p>
           </section>
 
           <section>
@@ -58,7 +58,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-3">7. Intellectual Property</h2>
-            <p>All content, scoring methodologies, design, and code comprising the Service are the property of Patriot Pulse Digital LLC. Your use of the Service does not grant you any ownership rights to our intellectual property.</p>
+            <p>All content, scoring methodologies, design, and code comprising the Service are the property of Real Agent Systems, LLC. Your use of the Service does not grant you any ownership rights to our intellectual property.</p>
           </section>
 
           <section>
@@ -68,7 +68,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-3">9. Limitation of Liability</h2>
-            <p>To the maximum extent permitted by law, Patriot Pulse Digital LLC shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service. The Service is provided &quot;as is&quot; without warranties of any kind.</p>
+            <p>To the maximum extent permitted by law, Real Agent Systems, LLC shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service. The Service is provided &quot;as is&quot; without warranties of any kind.</p>
           </section>
 
           <section>
@@ -90,7 +90,7 @@ export default function TermsOfService() {
             <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-3">13. Contact Us</h2>
             <p>If you have questions about these Terms, contact us at:</p>
             <p className="mt-2">
-              <strong>Patriot Pulse Digital LLC</strong><br />
+              <strong>Real Agent Systems, LLC</strong><br />
               Email: josh@patriotpulsedigital.com
             </p>
           </section>
@@ -102,7 +102,7 @@ export default function TermsOfService() {
             <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-white">Terms of Service</Link>
           </div>
-          <p>&copy; {new Date().getFullYear()} Patriot Pulse Digital LLC. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Real Agent Systems, LLC. All rights reserved.</p>
         </div>
       </footer>
     </div>

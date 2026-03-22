@@ -20,7 +20,7 @@ export default function PrivacyPolicy() {
         <div className="prose prose-gray max-w-none space-y-6 text-gray-700 leading-relaxed">
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-3">1. Who We Are</h2>
-            <p>Real Agent Report is a free performance audit tool for real estate agents, operated by Patriot Pulse Digital LLC. Our website is located at realagentreport.com.</p>
+            <p>Real Agent Report is a free performance audit tool for real estate agents, operated by Real Agent Systems, LLC. Our website is located at realagentreport.com.</p>
           </section>
 
           <section>
@@ -97,7 +97,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-3">11. Contact Us</h2>
             <p>If you have questions about this privacy policy, contact us at:</p>
             <p className="mt-2">
-              <strong>Patriot Pulse Digital LLC</strong><br />
+              <strong>Real Agent Systems, LLC</strong><br />
               Email: josh@patriotpulsedigital.com
             </p>
           </section>
@@ -109,7 +109,7 @@ export default function PrivacyPolicy() {
             <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-white">Terms of Service</Link>
           </div>
-          <p>&copy; {new Date().getFullYear()} Patriot Pulse Digital LLC. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Real Agent Systems, LLC. All rights reserved.</p>
         </div>
       </footer>
     </div>
