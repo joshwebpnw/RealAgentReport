@@ -55,8 +55,6 @@ interface ScoreResult {
   incomeGap: {
     currentEstimatedIncome: number;
     topAgentIncome: number;
-    recoverableAmount: number;
-    recoveryRate: number;
   };
   speedBreakdown: { input: number; score: number; benchmark: string };
   followUpBreakdown: { input: number; score: number; benchmark: string };
@@ -1226,8 +1224,6 @@ function ScreenResults({
   const tier = getScoreTier(results.overallScore);
   const commissionLeak = formatCurrency(results.estimatedLostCommission);
   const currentIncome = formatCurrency(results.incomeGap.currentEstimatedIncome);
-  const topIncome = formatCurrency(results.incomeGap.topAgentIncome);
-  const recoverable = formatCurrency(results.incomeGap.recoverableAmount);
 
   const weeksLine =
     results.lostDeals > 0 && results.weeksPerLostDeal < 100
@@ -1425,15 +1421,9 @@ function ScreenResults({
             <span className="text-xs font-semibold text-gray-600">What You Could Be Earning</span>
             <span className="text-sm font-bold text-emerald-700">{formatCurrency(results.incomeGap.currentEstimatedIncome + results.estimatedLostCommission)}</span>
           </div>
-          <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-3">
-            <div className="text-center">
-              <div className="text-lg font-bold text-red-600">{commissionLeak}</div>
-              <div className="text-[10px] text-gray-500">Lost Commission Per Year</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-emerald-700">{recoverable}</div>
-              <div className="text-[10px] text-gray-500">Recoverable with Automation</div>
-            </div>
+          <div className="border-t border-gray-100 pt-3 text-center">
+            <div className="text-2xl font-bold text-red-600">{commissionLeak}</div>
+            <div className="text-xs text-gray-500">Estimated Lost Commission Per Year</div>
           </div>
         </div>
       </div>

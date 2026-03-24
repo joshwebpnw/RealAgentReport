@@ -21,8 +21,6 @@ interface AuditScoreResult {
   incomeGap: {
     currentEstimatedIncome: number;
     topAgentIncome: number;
-    recoverableAmount: number;
-    recoveryRate: number;
   };
   speedBreakdown: { input: number; score: number; benchmark: string };
   followUpBreakdown: { input: number; score: number; benchmark: string };
@@ -120,8 +118,6 @@ export function calculateAuditScore(input: AuditInput): AuditScoreResult {
   // Benchmark: 8% conversion rate, 38 deals/yr cap for top agents
   const BENCHMARK_CONVERSION = 8;
   const BENCHMARK_DEALS_PER_YEAR = 38;
-  const DEAL_RECOVERY_RATE = 0.35; // 35% of lost deals recoverable with automation
-
   const annualLeads = input.leadsPerMonth * 12;
   const currentDealsPerYear = (annualLeads * input.conversionRate) / 100;
   const currentEstimatedIncome = currentDealsPerYear * input.avgCommission;
@@ -131,14 +127,12 @@ export function calculateAuditScore(input: AuditInput): AuditScoreResult {
   let lostDeals = Math.max(0, topAgentDeals - currentDealsPerYear);
 
   // Every agent loses some deals to speed & follow-up gaps, even top performers.
-  // Agents don't see the leads that ghosted because they were too slow.
-  // Floor: at least 2 lost deals (scales down for elite agents).
+  // Floor: at least 2 lost deals.
   if (lostDeals < 2) {
     lostDeals = Math.max(2, Math.ceil(currentDealsPerYear * 0.10));
   }
 
   const estimatedLostCommission = Math.round(lostDeals * input.avgCommission);
-  const recoverableAmount = Math.round(lostDeals * DEAL_RECOVERY_RATE * input.avgCommission);
 
   // Speed benchmark description
   let speedBenchmark = '< 5 minutes (top agents)';
@@ -158,8 +152,6 @@ export function calculateAuditScore(input: AuditInput): AuditScoreResult {
     incomeGap: {
       currentEstimatedIncome: Math.round(currentEstimatedIncome),
       topAgentIncome: Math.round(topAgentIncome),
-      recoverableAmount,
-      recoveryRate: DEAL_RECOVERY_RATE,
     },
     speedBreakdown: {
       input: input.responseTimeMinutes,
