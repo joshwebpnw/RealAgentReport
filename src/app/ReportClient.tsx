@@ -124,7 +124,7 @@ const SCORE_TIERS: { min: number; label: string; color: string; bg: string }[] =
   { min: 0, label: 'At Risk', color: 'text-red-700', bg: 'bg-red-100' },
 ];
 
-// Badge config for top 20% agents
+// Badge config for top 25% agents
 // Badge tiers based on bell curve percentile
 const BADGES: { minPct: number; badge: string; tier: string; badgeColor: string; badgeBg: string; badgeBorder: string; icon: string }[] = [
   { minPct: 95, badge: 'Top 5% Agent', tier: 'Gold', badgeColor: 'text-amber-900', badgeBg: 'bg-gradient-to-br from-amber-300 to-yellow-500', badgeBorder: 'border-amber-400', icon: '🏆' },
@@ -308,25 +308,14 @@ function getImprovementPlan(score: number, results: ScoreResult) {
   ];
 }
 
-// Tier-specific share messaging
-function getShareConfig(score: number, tier: { label: string }, commissionLeak: string) {
-  if (score >= 70) return {
-    heading: 'You Earned a Badge — Show It Off',
-    sub: 'Flex your score. Challenge your office. See who\'s really on top.',
-    challengeText: `I just earned a ${getBadge(score)?.badge || tier.label} badge on the Real Agent Report with a ${score}/100. Think you can beat me?`,
-    sharePrompt: 'Share your badge and challenge other agents',
-  };
-  if (score >= 55) return {
-    heading: 'Are Your Colleagues Losing Deals Too?',
-    sub: `You might not be the only one leaking ${commissionLeak}. Send this to your office and find out who\'s actually on top.`,
-    challengeText: `I just found out I might be losing ${commissionLeak}/yr in commission. Curious where you stack up? Take the 60-second audit:`,
-    sharePrompt: 'Send to your office — see who\'s really winning',
-  };
+// Tier-specific share messaging (only used for top 25% agents)
+function getShareConfig(score: number, tier: { label: string }) {
+  const badge = getBadge(score);
   return {
-    heading: 'Don\'t Let Your Colleagues Make the Same Mistake',
-    sub: 'Most agents have no idea how much commission they\'re losing. Share this and find out who in your office needs a wake-up call.',
-    challengeText: `I just took the Real Agent Report and the results were eye-opening. Find out how much commission you might be losing:`,
-    sharePrompt: 'Share the wake-up call with other agents',
+    heading: 'You Earned a Badge -- Show It Off',
+    sub: `Share your ${badge?.badge || tier.label} status and let other agents see where you stand.`,
+    shareText: `I'm a ${badge?.badge || tier.label} according to Real Agent Report -- ${score}/100. See where you rank:`,
+    sharePrompt: 'Share your agent performance score',
   };
 }
 
@@ -423,6 +412,10 @@ function SocialShareBar({ shareText, shareUrl, onCopy, copied, compact }: { shar
       <a href={`mailto:?subject=${encodeURIComponent('Think you can beat my Agent Performance Score?')}&body=${encodeURIComponent(shareText + '\n\n' + shareUrl)}`} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-gray-600 text-white hover:bg-gray-700 transition-colors">
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         Email
+      </a>
+      <a href={`https://www.instagram.com/`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 text-white hover:opacity-90 transition-opacity">
+        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        Instagram
       </a>
       <button onClick={onCopy} className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${copied ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
         {copied ? (
@@ -1224,6 +1217,8 @@ function ScreenResults({
   const tier = getScoreTier(results.overallScore);
   const commissionLeak = formatCurrency(results.estimatedLostCommission);
   const currentIncome = formatCurrency(results.incomeGap.currentEstimatedIncome);
+  const percentile = scoreToPercentile(results.overallScore);
+  const isTop25 = percentile >= 75;
 
   const weeksLine =
     results.lostDeals > 0 && results.weeksPerLostDeal < 100
@@ -1235,8 +1230,8 @@ function ScreenResults({
   const shareUrl = typeof window !== 'undefined'
     ? `${window.location.origin}?challenge=${results.overallScore}`
     : `https://realagentreport.com?challenge=${results.overallScore}`;
-  const shareConfig = getShareConfig(results.overallScore, tier, commissionLeak);
-  const shareText = shareConfig.challengeText;
+  const shareConfig = isTop25 ? getShareConfig(results.overallScore, tier) : null;
+  const shareText = shareConfig?.shareText || '';
 
   return (
     <div className="space-y-8">
@@ -1333,11 +1328,29 @@ function ScreenResults({
         })()}
       </div>
 
-      {/* Share bar - below score */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Challenge your office - share your score</p>
-        <SocialShareBar shareText={shareText} shareUrl={shareUrl} onCopy={onShare} copied={copied} compact />
-      </div>
+      {/* Share bar - only for top 25% agents */}
+      {isTop25 && (
+        <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Share your agent performance score</p>
+          <SocialShareBar shareText={shareText} shareUrl={shareUrl} onCopy={onShare} copied={copied} compact />
+        </div>
+      )}
+
+      {/* Webinar CTA - only for bottom 75% agents */}
+      {!isTop25 && (
+        <div className="bg-gradient-to-r from-brand-50 to-indigo-50 border-2 border-brand-300 rounded-2xl p-5 text-center">
+          <h3 className="text-lg font-bold text-slate-900 mb-1">Want to Fix Your Score?</h3>
+          <p className="text-gray-500 text-sm mb-4">Join our free webinar and learn the systems top agents use to close more deals.</p>
+          <a
+            href="https://realagentlabs.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block bg-brand-600 hover:bg-brand-700 text-white font-bold text-base px-8 py-3.5 rounded-xl transition-all hover:scale-[1.02] shadow-md"
+          >
+            Join the Free Webinar
+          </a>
+        </div>
+      )}
 
       {/* Metric cards - always show lost commission */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1452,6 +1465,7 @@ function ScreenResults({
       {/* Primary CTA — score-specific hook */}
       {(() => {
         const hook = getCtaHook(results.overallScore, commissionLeak);
+        const ctaUrl = `https://agentassistant.io/signup?ref=report&utm_source=report&utm_medium=cta&score=${results.overallScore}&tier=${encodeURIComponent(tier.label)}${formData.email ? `&email=${encodeURIComponent(formData.email)}` : ''}`;
         return (
           <div className="bg-gradient-to-br from-slate-900 to-brand-900 rounded-2xl p-6 sm:p-8 text-center">
             <div className="text-3xl mb-3">{results.overallScore >= 80 ? '🚀' : results.overallScore >= 55 ? '⚡' : '🚨'}</div>
@@ -1462,7 +1476,7 @@ function ScreenResults({
               {hook.sub}
             </p>
             <a
-              href={`https://agentassistant.io/signup?ref=report&utm_source=report&utm_medium=cta&score=${results.overallScore}&tier=${encodeURIComponent(tier.label)}${formData.email ? `&email=${encodeURIComponent(formData.email)}` : ''}`}
+              href={ctaUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-slate-900 font-extrabold text-lg px-8 py-4 rounded-xl transition-all hover:scale-[1.02] shadow-lg shadow-amber-400/30"
@@ -1474,19 +1488,19 @@ function ScreenResults({
         );
       })()}
 
-      {/* Viral share section — tier-specific */}
-      {(() => {
+      {/* Viral share section — only for top 25% agents */}
+      {isTop25 && (() => {
         const badge = getBadge(results.overallScore);
-        const shareConfig = getShareConfig(results.overallScore, tier, commissionLeak);
-        const shareUrl = typeof window !== 'undefined'
+        const sc = getShareConfig(results.overallScore, tier);
+        const sUrl = typeof window !== 'undefined'
           ? `${window.location.origin}?challenge=${results.overallScore}`
           : `https://realagentreport.com?challenge=${results.overallScore}`;
-        const shareText = shareConfig.challengeText;
+        const sText = sc.shareText;
 
         return (
           <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm">
-            <h3 className="text-lg font-bold text-slate-900 mb-1">{shareConfig.heading}</h3>
-            <p className="text-gray-500 text-sm mb-5">{shareConfig.sub}</p>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">{sc.heading}</h3>
+            <p className="text-gray-500 text-sm mb-5">{sc.sub}</p>
 
             {/* Score card with badge */}
             <div className="bg-gradient-to-br from-slate-800 to-brand-900 rounded-xl p-5 mb-5 max-w-xs mx-auto text-white relative overflow-hidden">
@@ -1500,15 +1514,13 @@ function ScreenResults({
               <div className="text-sm font-bold mb-1">
                 <span className={`inline-block px-2 py-0.5 rounded text-xs ${tier.bg} ${tier.color}`}>{tier.label}</span>
               </div>
-              {badge ? (
+              {badge && (
                 <div className="text-xs text-emerald-300/80 mt-2 font-semibold">Verified {badge.badge} -- Real Agent Report</div>
-              ) : (
-                <div className="text-xs text-blue-200/60 mt-2">Commission Leak: {commissionLeak}/yr</div>
               )}
               <div className="text-[10px] text-blue-300/40 mt-3">realagentreport.com</div>
             </div>
 
-            {/* Badge display for top 20% */}
+            {/* Badge display for top 25% */}
             {badge && (
               <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 ${badge.badgeBorder} ${badge.badgeBg} mb-5 shadow-md`}>
                 <span className="text-lg">{badge.icon}</span>
@@ -1519,11 +1531,11 @@ function ScreenResults({
 
             {/* Social share buttons */}
             <div className="mb-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Share Your Score</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Share Your Agent Performance Score</p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {/* Facebook */}
                 <a
-                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`}
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(sUrl)}&quote=${encodeURIComponent(sText)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#1877F2] text-white hover:bg-[#166FE5] transition-colors"
@@ -1532,9 +1544,20 @@ function ScreenResults({
                   Facebook
                 </a>
 
+                {/* Instagram */}
+                <a
+                  href="https://www.instagram.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 text-white hover:opacity-90 transition-opacity"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                  Instagram
+                </a>
+
                 {/* X / Twitter */}
                 <a
-                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`}
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(sText)}&url=${encodeURIComponent(sUrl)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-black text-white hover:bg-gray-800 transition-colors"
@@ -1545,7 +1568,7 @@ function ScreenResults({
 
                 {/* LinkedIn */}
                 <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(sUrl)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#0A66C2] text-white hover:bg-[#004182] transition-colors"
@@ -1556,7 +1579,7 @@ function ScreenResults({
 
                 {/* WhatsApp */}
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(sText + ' ' + sUrl)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors"
@@ -1567,7 +1590,7 @@ function ScreenResults({
 
                 {/* SMS / iMessage */}
                 <a
-                  href={`sms:?&body=${encodeURIComponent(shareText + ' ' + shareUrl)}`}
+                  href={`sms:?&body=${encodeURIComponent(sText + ' ' + sUrl)}`}
                   className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
@@ -1576,7 +1599,7 @@ function ScreenResults({
 
                 {/* Email */}
                 <a
-                  href={`mailto:?subject=${encodeURIComponent('Think you can beat my Agent Performance Score?')}&body=${encodeURIComponent(shareText + '\n\n' + shareUrl)}`}
+                  href={`mailto:?subject=${encodeURIComponent('Check out my Agent Performance Score')}&body=${encodeURIComponent(sText + '\n\n' + sUrl)}`}
                   className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold bg-gray-600 text-white hover:bg-gray-700 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
@@ -1606,12 +1629,12 @@ function ScreenResults({
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
-                  Copy Challenge Link
+                  Copy Share Link
                 </>
               )}
             </button>
 
-            <p className="text-gray-400 text-xs mt-4">Challenge your office - see who&apos;s really on top</p>
+            <p className="text-gray-400 text-xs mt-4">Share your agent performance score</p>
           </div>
         );
       })()}
@@ -1727,14 +1750,13 @@ export default function ReportPage() {
     });
   }, [results]);
 
-  // Challenge another agent — tier-specific message with score URL
+  // Share score — tier-specific message with score URL
   const handleChallenge = useCallback(() => {
     if (!results) return;
     const challengeUrl = `${window.location.origin}?challenge=${results.overallScore}`;
     const tier = getScoreTier(results.overallScore);
-    const leak = formatCurrency(results.estimatedLostCommission);
-    const shareConfig = getShareConfig(results.overallScore, tier, leak);
-    const msg = `${shareConfig.challengeText} ${challengeUrl}`;
+    const shareConfig = getShareConfig(results.overallScore, tier);
+    const msg = `${shareConfig.shareText} ${challengeUrl}`;
     navigator.clipboard.writeText(msg).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
