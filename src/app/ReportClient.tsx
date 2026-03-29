@@ -1483,7 +1483,6 @@ function ScreenResults({
             >
               {hook.cta}
             </a>
-            <p className="text-blue-300/60 text-xs mt-4">No credit card required · Setup in minutes</p>
           </div>
         );
       })()}
