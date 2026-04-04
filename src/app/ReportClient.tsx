@@ -313,8 +313,8 @@ function getShareConfig(score: number, tier: { label: string }) {
   const badge = getBadge(score);
   return {
     heading: 'You Earned a Badge -- Show It Off',
-    sub: `Share your ${badge?.badge || tier.label} status and let other agents see where you stand.`,
-    shareText: `I'm a ${badge?.badge || tier.label} according to Real Agent Report -- ${score}/100. See where you rank:`,
+    sub: `Share your ${badge?.badge || tier.label} status and show other agents what a top performer looks like.`,
+    shareText: `I scored ${score}/100 on my Agent Performance Score -- certified ${badge?.badge || tier.label}. How do you stack up?`,
     sharePrompt: 'Share your agent performance score',
   };
 }
@@ -409,7 +409,7 @@ function SocialShareBar({ shareText, shareUrl, onCopy, copied, compact }: { shar
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
         Text
       </a>
-      <a href={`mailto:?subject=${encodeURIComponent('Think you can beat my Agent Performance Score?')}&body=${encodeURIComponent(shareText + '\n\n' + shareUrl)}`} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-gray-600 text-white hover:bg-gray-700 transition-colors">
+      <a href={`mailto:?subject=${encodeURIComponent('Check out my Agent Performance Score')}&body=${encodeURIComponent(shareText + '\n\n' + shareUrl)}`} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-gray-600 text-white hover:bg-gray-700 transition-colors">
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         Email
       </a>
@@ -599,17 +599,17 @@ function ScreenLanding({ onStart, challengeScore }: { onStart: () => void; chall
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-brand-950 to-brand-900 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full text-center">
-        {/* Challenge banner */}
+        {/* Referral banner */}
         {challengeScore !== null && (
           <div className="bg-amber-400/15 border-2 border-amber-400/40 rounded-2xl px-6 py-5 mb-8 max-w-lg mx-auto animate-fade-in">
-            <div className="text-amber-300 text-xs uppercase tracking-widest font-bold mb-2">Challenge Received</div>
+            <div className="text-amber-300 text-xs uppercase tracking-widest font-bold mb-2">Shared By A Top Agent</div>
             <div className="text-white text-lg font-bold mb-1">
               A fellow agent scored <span className="text-amber-400 text-2xl font-extrabold">{challengeScore}/100</span>
             </div>
             <div className={`inline-block px-2 py-0.5 rounded text-xs font-bold mb-2 ${challengeTier?.bg} ${challengeTier?.color}`}>
               {challengeTier?.label}
             </div>
-            <p className="text-blue-200/80 text-sm">Think you can beat them? Take the 60-second audit and find out.</p>
+            <p className="text-blue-200/80 text-sm">See how your performance compares. Take the free 60-second audit.</p>
           </div>
         )}
 
@@ -622,7 +622,7 @@ function ScreenLanding({ onStart, challengeScore }: { onStart: () => void; chall
         <h1 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight mb-5">
           {challengeScore !== null ? (
             <>
-              Can You <span className="text-amber-400">Beat Their Score?</span>
+              What&apos;s <span className="text-amber-400">Your Agent Score?</span>
             </>
           ) : (
             <>
@@ -647,7 +647,7 @@ function ScreenLanding({ onStart, challengeScore }: { onStart: () => void; chall
           onClick={onStart}
           className="w-full sm:w-auto bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-slate-900 font-extrabold text-lg px-10 py-5 rounded-2xl shadow-lg shadow-amber-400/30 transition-all duration-150 hover:scale-[1.02] active:scale-[0.99]"
         >
-          {challengeScore !== null ? 'Accept the Challenge →' : 'Run Your 60-Second Performance Score →'}
+          {challengeScore !== null ? 'Get Your Score →' : 'Run Your 60-Second Performance Score →'}
         </button>
 
         <div className="flex items-center justify-center gap-6 mt-8 text-sm text-blue-200/70">
@@ -1228,8 +1228,8 @@ function ScreenResults({
   const improvements = getImprovementPlan(results.overallScore, results);
 
   const shareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}?challenge=${results.overallScore}`
-    : `https://realagentreport.com?challenge=${results.overallScore}`;
+    ? `${window.location.origin}?score=${results.overallScore}`
+    : `https://realagentreport.com?score=${results.overallScore}`;
   const shareConfig = isTop25 ? getShareConfig(results.overallScore, tier) : null;
   const shareText = shareConfig?.shareText || '';
 
@@ -1250,10 +1250,10 @@ function ScreenResults({
         )}
       </div>
 
-      {/* Challenge comparison - show at top when someone came from a challenge link */}
+      {/* Score comparison - show when someone arrived via a shared link */}
       {challengeScore !== null && (
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-6 shadow-sm text-center">
-          <div className="text-xs uppercase tracking-widest font-bold text-amber-600 mb-3">Challenge Result</div>
+          <div className="text-xs uppercase tracking-widest font-bold text-amber-600 mb-3">Score Comparison</div>
           <div className="flex items-center justify-center gap-6">
             <div>
               <div className="text-sm text-gray-500 font-medium mb-1">Their Score</div>
@@ -1269,11 +1269,11 @@ function ScreenResults({
           </div>
           <p className="mt-3 text-sm font-semibold">
             {results.overallScore > challengeScore ? (
-              <span className="text-emerald-700">You beat their score by {results.overallScore - challengeScore} points! Now challenge another agent.</span>
+              <span className="text-emerald-700">You scored {results.overallScore - challengeScore} points higher! Share your score and show others what a top agent looks like.</span>
             ) : results.overallScore < challengeScore ? (
-              <span className="text-red-700">They beat you by {challengeScore - results.overallScore} points. See below how to improve your score.</span>
+              <span className="text-red-700">They scored {challengeScore - results.overallScore} points higher. See below how to improve your performance.</span>
             ) : (
-              <span className="text-amber-700">It&apos;s a tie! See below how to pull ahead.</span>
+              <span className="text-amber-700">Same score! See below how to pull ahead.</span>
             )}
           </p>
         </div>
@@ -1492,8 +1492,8 @@ function ScreenResults({
         const badge = getBadge(results.overallScore);
         const sc = getShareConfig(results.overallScore, tier);
         const sUrl = typeof window !== 'undefined'
-          ? `${window.location.origin}?challenge=${results.overallScore}`
-          : `https://realagentreport.com?challenge=${results.overallScore}`;
+          ? `${window.location.origin}?score=${results.overallScore}`
+          : `https://realagentreport.com?score=${results.overallScore}`;
         const sText = sc.shareText;
 
         return (
@@ -1661,12 +1661,12 @@ export default function ReportPage() {
   const [copied, setCopied] = useState(false);
   const [challengeScore, setChallengeScore] = useState<number | null>(null);
 
-  // Read challenge score from URL params (e.g. ?challenge=38)
+  // Read shared score from URL params (e.g. ?score=82 or legacy ?challenge=38)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const challenge = params.get('challenge');
-    if (challenge) {
-      const score = parseInt(challenge, 10);
+    const shared = params.get('score') || params.get('challenge');
+    if (shared) {
+      const score = parseInt(shared, 10);
       if (!isNaN(score) && score >= 0 && score <= 100) {
         setChallengeScore(score);
       }
@@ -1741,7 +1741,7 @@ export default function ReportPage() {
   // Viral share — include score in URL so recipients see the challenge
   const handleShare = useCallback(() => {
     const url = results
-      ? `${window.location.origin}?challenge=${results.overallScore}`
+      ? `${window.location.origin}?score=${results.overallScore}`
       : window.location.origin;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
@@ -1752,7 +1752,7 @@ export default function ReportPage() {
   // Share score — tier-specific message with score URL
   const handleChallenge = useCallback(() => {
     if (!results) return;
-    const challengeUrl = `${window.location.origin}?challenge=${results.overallScore}`;
+    const challengeUrl = `${window.location.origin}?score=${results.overallScore}`;
     const tier = getScoreTier(results.overallScore);
     const shareConfig = getShareConfig(results.overallScore, tier);
     const msg = `${shareConfig.shareText} ${challengeUrl}`;
