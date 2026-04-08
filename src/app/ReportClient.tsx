@@ -312,11 +312,14 @@ function getImprovementPlan(score: number, results: ScoreResult) {
 // Tier-specific share messaging (only used for top 25% agents)
 function getShareConfig(score: number, tier: { label: string }) {
   const badge = getBadge(score);
+  const pct = scoreToPercentile(score);
+  const badgeLabel = badge?.badge || tier.label;
+  const icon = badge?.icon || '';
   return {
-    heading: 'You Earned a Badge -- Show It Off',
-    sub: `Share your ${badge?.badge || tier.label} status and show other agents what a top performer looks like.`,
-    shareText: `I scored ${score}/100 on my Agent Performance Score -- certified ${badge?.badge || tier.label}. How do you stack up?`,
-    sharePrompt: 'Share your agent performance score',
+    heading: `${icon} You're in the Top ${100 - pct}% — Show It Off`,
+    sub: 'Share your score with clients and your network. Let them see what a top-performing agent looks like.',
+    shareText: `${icon} Just scored ${score}/100 on the Agent Performance Score — officially certified as a ${badgeLabel}. If you're looking to buy or sell, you deserve an agent who performs at this level. See my full results:`,
+    sharePrompt: 'Share your badge with clients',
   };
 }
 
@@ -1228,9 +1231,11 @@ function ScreenResults({
 
   const improvements = getImprovementPlan(results.overallScore, results);
 
+  const shareBadge = getBadge(results.overallScore);
+  const shareBadgeParam = shareBadge ? `&badge=${encodeURIComponent(shareBadge.badge)}` : '';
   const shareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}?score=${results.overallScore}`
-    : `https://realagentreport.com?score=${results.overallScore}`;
+    ? `${window.location.origin}?score=${results.overallScore}${shareBadgeParam}`
+    : `https://realagentreport.com?score=${results.overallScore}${shareBadgeParam}`;
   const shareConfig = isTop25 ? getShareConfig(results.overallScore, tier) : null;
   const shareText = shareConfig?.shareText || '';
 
@@ -1492,9 +1497,10 @@ function ScreenResults({
       {isTop25 && (() => {
         const badge = getBadge(results.overallScore);
         const sc = getShareConfig(results.overallScore, tier);
+        const sBadgeParam = badge ? `&badge=${encodeURIComponent(badge.badge)}` : '';
         const sUrl = typeof window !== 'undefined'
-          ? `${window.location.origin}?score=${results.overallScore}`
-          : `https://realagentreport.com?score=${results.overallScore}`;
+          ? `${window.location.origin}?score=${results.overallScore}${sBadgeParam}`
+          : `https://realagentreport.com?score=${results.overallScore}${sBadgeParam}`;
         const sText = sc.shareText;
 
         return (
@@ -1740,11 +1746,12 @@ export default function ReportPage() {
     goTo('email-gate');
   }, [goTo]);
 
-  // Viral share — include score in URL so recipients see the challenge
+  // Viral share — include score + badge in URL for dynamic OG image
   const handleShare = useCallback(() => {
-    const url = results
-      ? `${window.location.origin}?score=${results.overallScore}`
-      : window.location.origin;
+    if (!results) { navigator.clipboard.writeText(window.location.origin); return; }
+    const badge = getBadge(results.overallScore);
+    const badgeParam = badge ? `&badge=${encodeURIComponent(badge.badge)}` : '';
+    const url = `${window.location.origin}?score=${results.overallScore}${badgeParam}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
