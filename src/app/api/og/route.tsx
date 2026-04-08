@@ -23,10 +23,10 @@ export async function GET(req: NextRequest) {
   // Badge display
   let badgeText = '';
   let badgeIcon = '';
-  if (badge === 'Top 5%') { badgeText = 'Top 5% Agent'; badgeIcon = '\u{1F3C6}'; }
-  else if (badge === 'Top 10%') { badgeText = 'Top 10% Agent'; badgeIcon = '\u{1F948}'; }
-  else if (badge === 'Top 20%') { badgeText = 'Top 20% Agent'; badgeIcon = '\u{1F949}'; }
-  else if (badge === 'Top 30%') { badgeText = 'Top 30% Agent'; badgeIcon = ''; }
+  if (badge.includes('5%')) { badgeText = 'Top 5% Agent'; badgeIcon = '\u{1F3C6}'; }
+  else if (badge.includes('10%')) { badgeText = 'Top 10% Agent'; badgeIcon = '\u{1F948}'; }
+  else if (badge.includes('20%')) { badgeText = 'Top 20% Agent'; badgeIcon = '\u{1F949}'; }
+  else if (badge.includes('30%')) { badgeText = 'Top 30% Agent'; badgeIcon = ''; }
 
   return new ImageResponse(
     (
