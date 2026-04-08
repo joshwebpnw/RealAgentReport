@@ -93,7 +93,7 @@ const FOLLOW_UP_MIDPOINTS: Record<FollowUpOption, number> = {
   '1-2 times': 1.5,
   '3-4 times': 3.5,
   '5-7 times': 6,
-  '8+': 10,
+  '8+': 15,
 };
 
 const LEAD_SOURCE_OPTIONS = [
