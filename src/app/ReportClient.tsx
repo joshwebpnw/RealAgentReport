@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { calculateAuditScore, scoreToPercentile } from '@/lib/audit-scoring';
+import { trackEvent } from '@/components/MetaPixel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1730,6 +1731,7 @@ export default function ReportPage() {
     }
 
     setSubmitting(false);
+    if (computed) trackEvent('Lead', { content_name: 'agent_performance_score', value: computed.overallScore });
     goTo('results');
   }, [submitting, formData, goTo]);
 
@@ -1780,6 +1782,7 @@ export default function ReportPage() {
 
   // Results also gets a wider layout
   if (screen === 'results' && results) {
+    trackEvent('ViewContent', { content_name: 'agent_performance_score', value: results.overallScore });
     return (
       <div
         className={`min-h-screen bg-gray-50 transition-opacity duration-200 ${
